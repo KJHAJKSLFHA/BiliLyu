@@ -1,0 +1,13 @@
+# 构建产物
+macapp/build/
+dist/
+*.app
+
+# 内置的 ffmpeg 二进制（43 MB，GPL，构建时自行下载）
+macapp/vendor/ffmpeg
+
+# 本地工具（登录用的 gh CLI 等）
+.tools/
+
+# macOS
+.DS_Store
