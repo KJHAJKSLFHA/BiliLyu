@@ -21,3 +21,4 @@ __testdata/
 
 # 部署临时目录（deploy.sh 拼装产生）
 .deploy/
+__t/
