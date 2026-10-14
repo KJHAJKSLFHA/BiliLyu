@@ -143,7 +143,7 @@ a:hover{text-decoration:underline}
 
 /* ---------- 通用容器 ---------- */
 .wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
-.sec{padding:88px 0}
+.sec{padding:72px 0}
 .sec-tight{padding:64px 0}
 .eyebrow{
   font-size:14px;font-weight:600;color:var(--accent);
@@ -163,7 +163,12 @@ h3{font-size:20px;line-height:1.25;font-weight:600;letter-spacing:-.012em}
 .tiny{font-size:13px;color:var(--text3)}
 
 /* ---------- Hero ---------- */
-.hero{padding:80px 0 44px;text-align:center}
+.hero{padding:112px 0 96px;text-align:center}
+.hero-actions{
+  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
+  margin-top:32px;
+}
+.hero-note{margin-top:20px;font-size:14px;color:var(--text3)}
 .hero h1{max-width:15ch;margin:0 auto}
 .hero .lede{max-width:46ch;margin:18px auto 0}
 .hero-badge{
@@ -496,7 +501,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px
       <span>Video Converter</span>
     </a>
     <div class="nav-links">
-      <a href="#tool" data-i18n="navTool">转换</a>
+      <a href="app/" data-i18n="navTool">转换</a>
       <a href="#feat" data-i18n="navFeat">特性</a>
       <a href="#download" data-i18n="navDl">下载</a>
     </div>
@@ -518,93 +523,14 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px
     <div class="hero-badge"><span class="dot"></span><span data-i18n="heroBadge">全程在本机运行，视频不会上传</span></div>
     <h1 data-i18n="heroTitle">把视频，变简单。</h1>
     <p class="lede" data-i18n="heroSub">B 站下载的 .m4s 自动配对合并成 MP4。原质量无损，不重新编码。</p>
-  </div>
-</section>
-
-<!-- ============ 工具区 ============ -->
-<section class="sec-tight" id="tool" style="padding-top:8px">
-  <div class="wrap">
-    <div class="tool">
-      <div class="tool-head">
-        <div class="importbox" style="display:flex;gap:10px;flex-wrap:wrap">
-          <button class="btn primary btn-sm" id="btnPickFiles">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
-            <span data-i18n="pickFiles">选择视频文件</span>
-          </button>
-          <button class="btn btn-sm" id="btnPickDir">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-            <span data-i18n="pickDir">选择视频文件夹</span>
-          </button>
-        </div>
-        <div class="spacer"></div>
-        <div class="stats" id="stats">
-          <div class="stat"><b id="stTotal">0</b><i data-i18n="stTotal">个视频</i></div>
-          <div class="stat"><b id="stDone">0</b><i data-i18n="stDone">已转换</i></div>
-          <div class="stat"><b id="stPending">0</b><i data-i18n="stPending">待转换</i></div>
-          <div class="stat"><b id="stSize">0 B</b><i data-i18n="stSize">总大小</i></div>
-        </div>
-      </div>
-
-      <div class="warnbar" id="warnBar"></div>
-
-      <div class="toolbar">
-        <div class="search">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-          <input id="search" type="text" data-i18n-ph="searchPh" placeholder="搜索标题 / UP主 / BV号…">
-        </div>
-        <div class="tabs" id="tabs">
-          <button data-f="all" class="on" data-i18n="tabAll">全部</button>
-          <button data-f="pending" data-i18n="tabPending">待转换</button>
-          <button data-f="done" data-i18n="tabDone">已转换</button>
-        </div>
-        <select id="sort">
-          <option value="title" data-i18n="sortTitle">按标题</option>
-          <option value="size" data-i18n="sortSize">按大小</option>
-          <option value="duration" data-i18n="sortDuration">按时长</option>
-        </select>
-        <button class="btn ghost" id="btnClearAll" data-i18n="clearList">清空列表</button>
-      </div>
-
-      <div class="options">
-        <div class="opt"><span data-i18n="outLabel">输出文件夹</span>
-          <span class="outpath unset" id="outPath">未选择（将下载到浏览器默认下载位置）</span>
-          <button class="btn ghost" id="btnOutDir" data-i18n="chooseFolder">选择文件夹</button>
-          <button class="btn ghost hidden" id="btnOutClear" data-i18n="clear">清除</button>
-        </div>
-        <div class="opt"><span data-i18n="delOriginals">转换后删除原文件</span>
-          <div class="switch" id="swDel"></div>
-        </div>
-        <div class="opt" style="color:var(--text3)" data-i18n="qualityNote">画质：原质量无损（只换封装，不重新编码）</div>
-      </div>
-
-      <main class="list">
-        <div class="grid" id="grid"></div>
-        <div class="empty" id="empty">
-          <div class="dropbig" id="dropbig">
-            <div class="di"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7 9 5-5 5 5"/><path d="M4 16v2.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V16"/></svg></div>
-            <div class="dt" data-i18n="dropTitle">把视频或整个文件夹拖到这里</div>
-            <div class="ds" data-i18n-html="dropSub">B 站下载的 .m4s（音视频分离）会自动配对合并，并读取同目录的封面与标题<br>也支持 mp4 / mkv / flv / ts / webm 等 · 全程在本机浏览器中完成，视频不会上传</div>
-            <div class="dropacts">
-              <button class="btn primary" id="btnPickFiles2" data-i18n="pickFiles">选择视频文件</button>
-              <button class="btn" id="btnPickDir2" data-i18n="pickDir">选择视频文件夹</button>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <div class="actionbar">
-        <button class="btn ghost btn-sm" id="btnSelAll" data-i18n="selAll">全选</button>
-        <button class="btn ghost btn-sm" id="btnSelNone" data-i18n="selNone">取消选择</button>
-        <button class="btn ghost btn-sm" id="btnRemoveSel" data-i18n="removeSel">移除选中</button>
-        <span class="selinfo"><span data-i18n="selPre">已选 </span><b id="selCount">0</b><span data-i18n="selPost"> 个</span></span>
-        <div class="spacer"></div>
-        <button class="btn ghost btn-sm" id="btnCancelAll" style="color:var(--warn)" data-i18n="cancelAll">批量取消转换</button>
-        <button class="btn btn-sm" id="btnAllPending" data-i18n="convertAllPending">转换全部待转换</button>
-        <button class="btn primary btn-sm" id="btnConvert" disabled data-i18n="convertSel">转换选中</button>
-      </div>
+    <div class="hero-actions">
+      <a class="btn primary btn-lg" href="app/" data-i18n="ctaStart">开始使用</a>
+      <a class="btn btn-lg" href="#download" data-i18n="ctaDl">下载桌面版</a>
     </div>
+    <p class="hero-note" data-i18n="heroNote">无需注册 · 无需安装 · 打开即用</p>
   </div>
 </section>
+
 
 <!-- ============ 特性 ============ -->
 <section class="sec" id="feat">
@@ -634,7 +560,7 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px
     <div class="numbers">
       <div class="n"><b>0</b><i data-i18n="n1">重新编码</i></div>
       <div class="n"><b>∞</b><i data-i18n="n2">批量数量</i></div>
-      <div class="n"><b>24 MB</b><i data-i18n="n3">转换内核 · 首次加载后缓存</i></div>
+      <div class="n"><b>0 B</b><i data-i18n="n3">上传流量</i></div>
       <div class="n"><b>100%</b><i data-i18n="n4">本机处理</i></div>
     </div>
   </div>
@@ -648,11 +574,11 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px
       <h2 data-i18n="dlTitle">下载 macOS 应用</h2>
       <p class="lede" data-i18n="dlSub">内置原生 ffmpeg，直接流式处理大文件。几 GB 的视频也不会遇到内存瓶颈。</p>
       <div class="dl-actions">
-        <a class="btn primary btn-lg" id="btnDownload" href="https://github.com/KJHAJKSLFHA/BiliLyu/releases/latest">
+        <a class="btn primary btn-lg" id="btnDownload" href="https://github.com/KJHAJKSLFHA/bililyu/releases/latest">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
           <span data-i18n="dlBtn">下载 .dmg</span>
         </a>
-        <a class="btn btn-lg" href="https://github.com/KJHAJKSLFHA/BiliLyu" data-i18n="dlSrc">查看源代码</a>
+        <a class="btn btn-lg" href="https://github.com/KJHAJKSLFHA/bililyu" data-i18n="dlSrc">查看源代码</a>
       </div>
       <div class="dl-meta">
         <span data-i18n="dlVer">版本 1.0.0</span>
@@ -681,46 +607,16 @@ footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px
     <div class="foot-in">
       <span data-i18n="footCopy">Video Converter · 把 B 站视频变简单</span>
       <div class="foot-links">
-        <a href="https://github.com/KJHAJKSLFHA/BiliLyu" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/KJHAJKSLFHA/BiliLyu/releases" target="_blank" rel="noopener" data-i18n="footRel">发布记录</a>
-        <a href="#tool" data-i18n="footTop">回到转换</a>
+        <a href="https://github.com/KJHAJKSLFHA/bililyu" target="_blank" rel="noopener">GitHub</a>
+        <a href="https://github.com/KJHAJKSLFHA/bililyu/releases" target="_blank" rel="noopener" data-i18n="footRel">发布记录</a>
+        <a href="app/" data-i18n="footTop">回到转换</a>
       </div>
     </div>
   </div>
 </footer>
 
-<!-- ============ 浮动与覆盖层 ============ -->
-<button class="fab" id="fab">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>
-  <span data-i18n="jobs">任务进度</span> <span class="cnt" id="fabCnt">0</span>
-</button>
 
-<aside class="drawer" id="drawer">
-  <header>
-    <div class="dtitle">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>
-      <span data-i18n="tasks">转换任务</span>
-      <div class="spacer" style="flex:1"></div>
-      <button class="btn ghost btn-sm" id="btnCloseDrawer" data-i18n="collapse">收起</button>
-    </div>
-  </header>
-  <div class="dbody" id="jobList"></div>
-</aside>
 
-<div class="overlay" id="overlay">
-  <div class="ovcard">
-    <div class="sp1"></div>
-    <div class="ot" id="ovTitle">正在加载转换引擎…</div>
-    <div class="os" id="ovSub">首次使用需要下载约 24MB 的转换内核，之后会缓存</div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<input type="file" id="fileInput" multiple accept="video/*,.m4s,.ts,.mkv,.flv,.webm,.mov,.avi" class="hidden">
-<input type="file" id="dirInput" webkitdirectory multiple class="hidden">
-
-<script src="vendor/ffmpeg.min.js"></script>
 <script>
 "use strict";
 const $ = s => document.querySelector(s);
@@ -791,6 +687,8 @@ const I18N = {
     heroBadge:'全程在本机运行，视频不会上传',
     heroTitle:'把视频，变简单。',
     heroSub:'B 站下载的 .m4s 自动配对合并成 MP4。原质量无损，不重新编码。',
+    ctaStart:'开始使用', ctaDl:'下载桌面版',
+    heroNote:'无需注册 · 无需安装 · 打开即用',
     featEyebrow:'为什么用它',
     featTitle:'该快的地方快，该稳的地方稳。',
     f1t:'原质量无损',
@@ -799,7 +697,7 @@ const I18N = {
     f2d:'整个文件夹拖进来即可。音视频分离的 .m4s 会按编号自动配对，封面和标题一并读出。',
     f3t:'数据不出本机',
     f3d:'转换全部在你的浏览器或本机应用中完成，文件不会上传到任何服务器。',
-    n1:'重新编码', n2:'批量数量', n3:'转换内核 · 首次加载后缓存', n4:'本机处理',
+    n1:'重新编码', n2:'批量数量', n3:'上传流量', n4:'本机处理',
     dlTitle:'下载 macOS 应用',
     dlSub:'内置原生 ffmpeg，直接流式处理大文件。几 GB 的视频也不会遇到内存瓶颈。',
     dlBtn:'下载 .dmg', dlSrc:'查看源代码',
@@ -876,6 +774,8 @@ const I18N = {
     heroBadge:'Runs entirely on your device. Nothing is uploaded.',
     heroTitle:'Video, made simple.',
     heroSub:'Bilibili .m4s files pair up and merge into MP4 automatically. Lossless — no re-encoding.',
+    ctaStart:'Get started', ctaDl:'Download desktop app',
+    heroNote:'No sign-up · No install · Works instantly',
     featEyebrow:'Why use it',
     featTitle:'Fast where it counts. Solid where it matters.',
     f1t:'Lossless by design',
@@ -884,7 +784,7 @@ const I18N = {
     f2d:'Drop in a whole folder. Split audio and video .m4s files are matched by number, with covers and titles read alongside.',
     f3t:'Your files stay yours',
     f3d:'Everything happens in your browser or on your Mac. No file is ever uploaded to a server.',
-    n1:'re-encoding', n2:'batch size', n3:'core · cached after first load', n4:'on-device',
+    n1:'re-encoding', n2:'batch size', n3:'upload traffic', n4:'on-device',
     dlTitle:'Download for macOS',
     dlSub:'Native ffmpeg built in, streaming large files directly. Multi-gigabyte videos without the memory wall.',
     dlBtn:'Download .dmg', dlSrc:'View source',
@@ -922,671 +822,12 @@ function applyI18n(){
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
   const lb = document.getElementById('btnLang'); if(lb) lb.textContent = t('langSwitch');
-  refreshOutPath();
-  if(state.deleteOriginals){ const wb = $('#warnBar'); if(wb) wb.textContent = t('warnDel'); }
-  updateStats(); updateSelInfo(); render(); paintDrawer();
 }
 
-/* ---------------- 常量 ---------------- */
-const AUDIO_IDS = new Set(['30216','30232','30280']);
-const VIDEO_EXT = new Set(['mp4','mkv','flv','ts','webm','mov','avi','m4v','mpg','mpeg','wmv','f4v','ogv']);
-const QN_LABEL = { 6:'240P', 16:'360P', 32:'480P', 64:'720P', 74:'720P60', 80:'1080P', 112:'1080P+', 116:'1080P60', 120:'4K', 125:'HDR', 126:'杜比', 127:'8K' };
-const checkSvg = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>';
-
-/* ---------------- 状态 ---------------- */
-const state = {
-  items: [],
-  sel: new Set(),
-  filter: 'all', q: '', sort: 'title',
-  outDir: null, outDirName: '',
-  deleteOriginals: false,
-  ff: null, engineState: 'idle',
-  queue: [], running: null, cancelFlag: false,
-  jobs: [],
-  seq: 0,
-};
-
-/* ---------------- 工具 ---------------- */
-function fmtBytes(n){
-  if(!n) return '0 B';
-  const u=['B','KB','MB','GB','TB']; let i=0,v=n;
-  while(v>=1024&&i<u.length-1){v/=1024;i++;}
-  return (v>=100||i===0?v.toFixed(0):v.toFixed(1))+' '+u[i];
-}
-function fmtDur(s){
-  s = Math.round(s||0); if(!s) return '';
-  const h=Math.floor(s/3600), m=Math.floor(s%3600/60), sec=s%60;
-  const p=n=>String(n).padStart(2,'0');
-  return h ? `${h}:${p(m)}:${p(sec)}` : `${m}:${p(sec)}`;
-}
-function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
-let toastT;
-function toast(msg, type){
-  const t = $('#toast'); t.textContent = msg;
-  t.className = 'toast show' + (type==='err'?' err':type==='ok'?' ok':'');
-  clearTimeout(toastT); toastT = setTimeout(()=>t.className='toast', 2800);
-}
-const uid = ()=> 'i'+(++state.seq)+'_'+Math.random().toString(36).slice(2,7);
-function extOf(name){ const m=/\.([a-z0-9]+)$/i.exec(name); return m?m[1].toLowerCase():''; }
-function stripExt(name){ return name.replace(/\.[^.]+$/,''); }
-function sanitizeName(s){
-  let x = String(s||'').replace(/\|/g,'｜').replace(/[\\/:*?"<>|\u0000-\u001f]/g,'_').replace(/\s+/g,' ').trim();
-  x = x.replace(/^[.\s]+|[.\s]+$/g,'');
-  if(x.length>110) x = x.slice(0,110).trim();
-  return x || 'video';
-}
-
-/* ---------------- 引擎（状态指示已在界面上隐藏） ---------------- */
-const CORE_PATH = new URL('vendor/ffmpeg-core.js', location.href).href;
-function setEngine(st, txt){
-  state.engineState = st;
-  const el = document.getElementById('engine');
-  if(el){
-    el.className = 'engine' + (st==='ready'?' ready':st==='loading'?' loading':st==='error'?' err':'');
-    const t = document.getElementById('engineTxt'); if(t) t.textContent = txt;
-  }
-}
-let enginePromise = null;
-async function ensureEngine(){
-  if(state.ff && state.engineState==='ready') return state.ff;
-  if(!enginePromise){
-    enginePromise = (async ()=>{
-      if(typeof FFmpeg === 'undefined') throw new Error(t('errEngineNotLoaded'));
-      setEngine('loading','引擎加载中…');
-      const ff = FFmpeg.createFFmpeg({ corePath: CORE_PATH, mainName:'main', log:false, logger:()=>{} });
-      ff.setProgress(({ratio})=>{
-        if(state.running && ratio>=0 && ratio<=1){
-          state.running.progress = ratio;
-          paintCard(state.running); paintDrawer();
-        }
-      });
-      await ff.load();
-      state.ff = ff;
-      setEngine('ready','引擎已就绪');
-      return ff;
-    })().catch(e=>{ enginePromise = null; setEngine('error','引擎加载失败'); throw e; });
-  }
-  return enginePromise;
-}
-function resetEngine(){ enginePromise = null; state.ff = null; setEngine('idle','引擎待机'); }
-
-// 单线程内核(@ffmpeg/core-st)在每次命令执行完毕后会调用 exit() 终止运行时，
-// 之后必须重新创建模块实例才能继续执行下一条命令，否则会报
-// "Program terminated with exit(0)" / "can only run one command at a time"。
-async function recycleEngine(){
-  const ff = state.ff;
-  state.ff = null;
-  enginePromise = null;
-  setEngine('idle','引擎待机');
-  if(ff){ try{ ff.exit(); }catch(_){} }
-}
-
-/* ---------------- 导入 ---------------- */
-function isM4s(name){ return /\.m4s$/i.test(name); }
-function isVideo(name){ return VIDEO_EXT.has(extOf(name)); }
-
-async function ingestRecords(records){
-  if(!records.length){ toast(t('toastNoVideo'), 'err'); return; }
-  const groups = new Map();
-  for(const r of records){
-    const dir = r.path.includes('/') ? r.path.slice(0, r.path.lastIndexOf('/')) : '';
-    if(!groups.has(dir)) groups.set(dir, []);
-    groups.get(dir).push(r);
-  }
-  let added = 0, skipped = 0;
-
-  for(const [dir, list] of groups){
-    // 1) 元数据
-    let meta = {};
-    const info = list.find(x=>/^videoInfo\.json$/i.test(x.name));
-    if(info){ try{ meta = JSON.parse(await (await info.getFile()).text()) || {}; }catch(_){ meta = {}; } }
-    // 2) 封面：本地 image.jpg → group.jpg → 远端 coverUrl（升级为 https）
-    let coverUrl = '';
-    const coverRec = list.find(x=>/^image\.jpg$/i.test(x.name)) || list.find(x=>/^group\.jpg$/i.test(x.name));
-    if(coverRec){ try{ coverUrl = URL.createObjectURL(await coverRec.getFile()); }catch(_){} }
-    if(!coverUrl){
-      const c = meta.coverUrl || meta.cover || meta.pic || '';
-      if(/^https?:/i.test(c)) coverUrl = c.replace(/^http:/i,'https:');
-    }
-    const duration = Number(meta.duration) || 0;
-    const qn = Number(meta.qn) || 0;
-    const quality = qnLabel(qn);
-    const uname = meta.uname || (meta.owner && meta.owner.name) || '';
-    const bvid = meta.bvid || '';
-
-    // 3) m4s 配对
-    const m4s = list.filter(x=>isM4s(x.name));
-    const byPrefix = new Map();
-    for(const m of m4s){
-      const mm = /^(.+)-(\d+)\.m4s$/i.exec(m.name);
-      const prefix = mm ? mm[1] : stripExt(m.name);
-      const id = mm ? mm[2] : '';
-      if(!byPrefix.has(prefix)) byPrefix.set(prefix, {video:[], audio:[]});
-      const g = byPrefix.get(prefix);
-      (AUDIO_IDS.has(id) ? g.audio : g.video).push({rec:m, id});
-    }
-    for(const [prefix, g] of byPrefix){
-      if(!g.video.length){ skipped++; continue; }
-      const avc = g.video.filter(v=>/^30\d{3}$/.test(v.id));
-      const pick = (avc.length?avc:g.video).sort((a,b)=>(+a.id||0)-(+b.id||0)).slice(-1)[0];
-      const v = pick.rec;
-      const a = g.audio.length ? g.audio.sort((x,y)=>(+x.id||0)-(+y.id||0)).slice(-1)[0].rec : null;
-      state.items.push({
-        id: uid(), kind:'dash', title: meta.title || prefix, uname, bvid,
-        duration, qn, quality, coverUrl,
-        vrec: v, arec: a,
-        size:0, sizeText:'', status:'pending', progress:0, message:'', outName:'',
-        originals: [v.del, a && a.del].filter(Boolean),
-        deletable: !!(v.del && (!a || a.del)),
-        hash: 'dash:'+dir+'/'+prefix,
-      });
-      added++;
-    }
-    // 4) 单个视频文件
-    for(const r of list){
-      if(isM4s(r.name)) continue;
-      if(/^videoInfo\.json$/i.test(r.name)) continue;
-      if(/^(image|group)\.jpg$/i.test(r.name)) continue;
-      if(!isVideo(r.name)) continue;
-      let size = 0;
-      try{ size = (await r.getFile()).size; }catch(_){}
-      state.items.push({
-        id: uid(), kind:'single', title: meta.title || stripExt(r.name), uname, bvid,
-        duration, quality: '', coverUrl,
-        vrec: r, arec: null,
-        size, sizeText: fmtBytes(size), status:'pending', progress:0, message:'', outName:'',
-        originals: [r.del].filter(Boolean), deletable: !!r.del,
-        hash: 'file:'+dir+'/'+r.name,
-      });
-      added++;
-    }
-  }
-  if(added) toast(t('toastImported', { n: added }) + (skipped?t('toastSkipped', { n: skipped }):''), 'ok');
-  else toast(t('toastNoVideo'), 'err');
-  render(); updateDelUI();
-  setTimeout(updateSizes, 30);
-}
-
-async function updateSizes(){
-  let changed = false;
-  for(const it of state.items){
-    if(it.kind==='single' && it.size) continue;
-    let s = 0;
-    try{
-      if(it.vrec) s += (await it.vrec.getFile()).size;
-      if(it.arec) s += (await it.arec.getFile()).size;
-    }catch(_){}
-    it.size = s; it.sizeText = fmtBytes(s); changed = true;
-  }
-  if(changed){
-    updateStats();
-    for(const it of state.items){
-      const el = document.querySelector('.card[data-id="'+it.id+'"] .meta .sub .s');
-      if(el) el.textContent = it.sizeText;
-    }
-  }
-}
-
-/* ---------------- 采集器 ---------------- */
-async function walkHandle(dirHandle, prefix, out){
-  for await (const [name, handle] of dirHandle.entries()){
-    if(name==='.DS_Store' || name.startsWith('.')) continue;
-    if(handle.kind==='file'){
-      out.push({ path: prefix+name, name, getFile: ()=>handle.getFile(), del:{ handle:dirHandle, name } });
-    } else if(handle.kind==='directory'){
-      await walkHandle(handle, prefix+name+'/', out);
-    }
-  }
-}
-async function walkEntry(entry, prefix, out){
-  if(entry.isFile){
-    if(entry.name==='.DS_Store' || entry.name.startsWith('.')) return;
-    out.push({ path: prefix+entry.name, name: entry.name, getFile: ()=> new Promise((res,rej)=>entry.file(res,rej)), del:null });
-  } else if(entry.isDirectory){
-    const reader = entry.createReader(); const all = [];
-    await new Promise((res)=>{
-      const read = ()=> reader.readEntries(batch=>{
-        if(!batch.length) return res();
-        all.push(...batch); read();
-      }, ()=>res());
-      read();
-    });
-    for(const c of all) await walkEntry(c, prefix+entry.name+'/', out);
-  }
-}
-
-/* ---------------- 导入入口 ---------------- */
-async function pickDir(){
-  if(window.showDirectoryPicker){
-    try{
-      const dir = await window.showDirectoryPicker({ mode:'readwrite' });
-      const recs = []; await walkHandle(dir, '', recs);
-      await ingestRecords(recs); return;
-    }catch(e){ if(e && e.name==='AbortError') return; }
-  }
-  $('#dirInput').click();
-}
-$('#btnPickFiles').addEventListener('click', ()=> $('#fileInput').click());
-$('#btnPickFiles2').addEventListener('click', ()=> $('#fileInput').click());
-$('#btnPickDir').addEventListener('click', pickDir);
-$('#btnPickDir2').addEventListener('click', pickDir);
-$('#fileInput').addEventListener('change', async e=>{
-  const fs = [...e.target.files]; e.target.value='';
-  await ingestRecords(fs.map(f=>({ path: f.webkitRelativePath || f.name, name: f.name, getFile: async()=>f, del:null })));
-});
-$('#dirInput').addEventListener('change', async e=>{
-  const fs = [...e.target.files]; e.target.value='';
-  await ingestRecords(fs.map(f=>({ path: f.webkitRelativePath || f.name, name: f.name, getFile: async()=>f, del:null })));
-});
-
-/* 拖放（整页） */
-['dragenter','dragover'].forEach(ev=>document.addEventListener(ev, e=>{
-  if(!e.dataTransfer) return;
-  e.preventDefault();
-  const d = $('#dropbig'); if(d) d.classList.add('over');
-}));
-document.addEventListener('dragleave', e=>{
-  if(e.relatedTarget && document.contains(e.relatedTarget)) return;
-  const d = $('#dropbig'); if(d) d.classList.remove('over');
-});
-document.addEventListener('drop', async e=>{
-  e.preventDefault();
-  const d = $('#dropbig'); if(d) d.classList.remove('over');
-  const recs = [];
-  const items = e.dataTransfer && e.dataTransfer.items;
-  if(items && items.length && items[0].webkitGetAsEntry){
-    const entries = [];
-    for(const it of items){ const en = it.webkitGetAsEntry && it.webkitGetAsEntry(); if(en) entries.push(en); }
-    for(const en of entries) await walkEntry(en, '', recs);
-  } else if(e.dataTransfer){
-    for(const f of e.dataTransfer.files) recs.push({ path:f.name, name:f.name, getFile:async()=>f, del:null });
-  }
-  await ingestRecords(recs);
-});
-
-/* ---------------- 渲染 ---------------- */
-function visibleItems(){
-  let list = state.items.slice();
-  if(state.filter==='pending') list = list.filter(i=>i.status!=='done');
-  if(state.filter==='done') list = list.filter(i=>i.status==='done');
-  const q = state.q.trim().toLowerCase();
-  if(q) list = list.filter(i =>
-    (i.title||'').toLowerCase().includes(q) ||
-    (i.uname||'').toLowerCase().includes(q) ||
-    (i.bvid||'').toLowerCase().includes(q));
-  const s = state.sort;
-  list.sort((a,b)=>{
-    if(s==='size') return (b.size||0)-(a.size||0);
-    if(s==='duration') return (b.duration||0)-(a.duration||0);
-    return (a.title||'').localeCompare(b.title||'','zh');
-  });
-  return list;
-}
-function qnLabel(qn){ return qn===126 ? t('qnDolby') : (QN_LABEL[qn] || ''); }
-function stateBadge(it){
-  if(it.status==='running') return '<span class="badge state run">'+Math.round((it.progress||0)*100)+'%</span>';
-  if(it.status==='done')     return '<span class="badge state done">'+t('badgeDone')+'</span>';
-  if(it.status==='error')    return '<span class="badge state err">'+t('badgeError')+'</span>';
-  if(it.status==='canceled') return '<span class="badge state canceled">'+t('badgeCanceled')+'</span>';
-  if(state.queue.indexOf(it.id)>=0) return '<span class="badge state">'+t('badgeQueued')+'</span>';
-  return '';
-}
-function cardHtml(it){
-  const sel = state.sel.has(it.id);
-  const running = it.status==='running';
-  const hasState = it.status!=='pending';
-  const qv = it.qn ? qnLabel(it.qn) : (it.quality || '');
-  const q = qv ? '<span class="badge q">'+esc(qv)+'</span>' : '';
-  const d = it.duration ? '<span class="badge dur">'+fmtDur(it.duration)+'</span>' : '';
-  const tag = it.kind==='dash'
-    ? '<span class="tag dash">'+t('kindDash')+'</span>'
-    : '<span class="tag single">'+t('kindSingle')+'</span>';
-  const pct = running ? Math.round((it.progress||0)*100) : 0;
-  return '<div class="card '+(sel?'sel':'')+' '+(running?'running':'')+' '+(hasState?'hasstate':'')+'" data-id="'+it.id+'">'
-    + '<div class="thumb">'
-    +   '<div class="ph">'+t('noCover')+'</div>'
-    +   (it.coverUrl ? '<img loading="lazy" src="'+esc(it.coverUrl)+'" alt="" onerror="this.remove()">' : '')
-    +   q + d + stateBadge(it)
-    +   '<div class="check">'+(sel?checkSvg:'')+'</div>'
-    + '</div>'
-    + '<div class="meta">'
-    +   '<div class="title" title="'+esc(it.title)+'">'+esc(it.title)+'</div>'
-    +   '<div class="tagwrap">'+tag+'</div>'
-    +   '<div class="sub"><span class="u" title="'+esc(it.uname)+'">'+esc(it.uname||t('unknownUp'))+'</span><span class="s">'+(it.sizeText||'…')+'</span></div>'
-    +   '<div class="pbar"><i style="width:'+pct+'%"></i></div>'
-    + '</div>'
-    + '</div>';
-}
-function render(){
-  const list = visibleItems();
-  $('#empty').style.display = list.length ? 'none' : 'flex';
-  $('#grid').innerHTML = list.map(cardHtml).join('');
-  updateStats(); updateSelInfo();
-}
-function paintCard(it){
-  const el = document.querySelector('.card[data-id="'+it.id+'"]');
-  if(!el) return;
-  const pct = Math.round((it.progress||0)*100);
-  const label = it.status==='running' ? pct+'%' : it.status==='done' ? t('badgeDone') : it.status==='error' ? t('badgeError') : it.status==='canceled' ? t('badgeCanceled') : (state.queue.indexOf(it.id)>=0 ? t('badgeQueued') : '');
-  const b = el.querySelector('.badge.state');
-  const cls = 'badge state' + (it.status==='done'?' done':it.status==='running'?' run':it.status==='error'?' err':it.status==='canceled'?' canceled':'');
-  if(b){ b.textContent = label; b.className = cls; }
-  else if(label){ el.querySelector('.thumb').insertAdjacentHTML('beforeend', stateBadge(it)); }
-  const bar = el.querySelector('.pbar i'); if(bar) bar.style.width = (it.status==='done'?100:pct)+'%';
-  el.classList.toggle('running', it.status==='running');
-  el.classList.toggle('hasstate', it.status!=='pending');
-}
-function updateStats(){
-  const n = state.items.length;
-  const total = state.items.reduce((a,b)=>a+(b.size||0),0);
-  const done = state.items.filter(i=>i.status==='done').length;
-  const pend = state.items.filter(i=>i.status!=='done').length;
-  $('#stTotal').textContent = n;
-  $('#stDone').textContent = done;
-  $('#stPending').textContent = pend;
-  $('#stSize').textContent = fmtBytes(total);
-}
-function updateSelInfo(){
-  $('#selCount').textContent = state.sel.size;
-  $('#btnConvert').disabled = state.sel.size===0;
-  const pend = state.items.filter(i=>i.status!=='done').length;
-  $('#btnAllPending').disabled = pend===0;
-  $('#btnAllPending').textContent = pend ? t('convertAllPending', { n: pend }) : t('allConverted');
-}
-
-/* ---------------- 交互 ---------------- */
-$('#grid').addEventListener('click', e=>{
-  const card = e.target.closest('.card'); if(!card) return;
-  const id = card.dataset.id;
-  const it = state.items.find(x=>x.id===id); if(!it) return;
-  if(it.status==='running'){ toast(t('toastRunning')); return; }
-  if(state.sel.has(id)) state.sel.delete(id); else state.sel.add(id);
-  const sel = state.sel.has(id);
-  card.classList.toggle('sel', sel);
-  const c = card.querySelector('.check'); if(c) c.innerHTML = sel?checkSvg:'';
-  updateSelInfo();
-});
-$('#tabs').addEventListener('click', e=>{
-  const b = e.target.closest('button'); if(!b) return;
-  state.filter = b.dataset.f;
-  [...$('#tabs').children].forEach(x=>x.classList.toggle('on', x===b));
-  render();
-});
-$('#search').addEventListener('input', e=>{ state.q = e.target.value; render(); });
-$('#sort').addEventListener('change', e=>{ state.sort = e.target.value; render(); });
-$('#btnSelAll').addEventListener('click', ()=>{ visibleItems().forEach(it=>state.sel.add(it.id)); render(); });
-$('#btnSelNone').addEventListener('click', ()=>{ state.sel.clear(); render(); });
-$('#btnRemoveSel').addEventListener('click', ()=>{
-  if(!state.sel.size){ toast(t('toastSelectFirst')); return; }
-  removeItems([...state.sel]);
-});
-$('#btnClearAll').addEventListener('click', ()=>{
-  if(state.running){ toast(t('toastCancelRunningFirst'), 'err'); return; }
-  if(!state.items.length){ toast(t('toastListEmpty')); return; }
-  if(confirm(t('confirmClearList'))){
-    state.items.forEach(revokeCover);
-    state.items=[]; state.sel.clear(); state.queue=[]; render(); paintDrawer();
-  }
-});
-function revokeCover(it){ if(it.coverUrl && it.coverUrl.slice(0,5)==='blob:'){ try{ URL.revokeObjectURL(it.coverUrl); }catch(_){} } }
-function removeItems(ids){
-  const set = new Set(ids);
-  if(ids.some(id=>{ const i=state.items.find(x=>x.id===id); return i && i.status==='running'; })){
-    toast(t('toastCannotRemoveRunning'), 'err'); return;
-  }
-  state.items.filter(i=>set.has(i.id)).forEach(revokeCover);
-  state.items = state.items.filter(i=>!set.has(i.id));
-  state.queue = state.queue.filter(id=>!set.has(id));
-  ids.forEach(id=>state.sel.delete(id));
-  render(); paintDrawer(); updateDelUI();
-}
-
-/* ---------------- 输出目录 ---------------- */
-function refreshOutPath(){
-  const el = $('#outPath'); if(!el) return;
-  if(state.outDirName){
-    el.textContent = t('outSet', { name: state.outDirName });
-    el.classList.remove('unset');
-  } else {
-    el.textContent = t('outUnset');
-    el.classList.add('unset');
-  }
-}
-$('#btnOutDir').addEventListener('click', async ()=>{
-  if(!window.showDirectoryPicker){
-    toast(t('toastNoPicker'), 'err'); return;
-  }
-  try{
-    const dir = await window.showDirectoryPicker({ mode:'readwrite' });
-    if(dir.requestPermission){
-      const p = await dir.requestPermission({ mode:'readwrite' });
-      if(p!=='granted'){ toast(t('toastNoPerm'), 'err'); return; }
-    }
-    state.outDir = dir; state.outDirName = dir.name;
-    refreshOutPath();
-    $('#btnOutClear').classList.remove('hidden');
-    toast(t('toastOutSet', { name: dir.name }), 'ok');
-  }catch(e){ if(e && e.name!=='AbortError') toast(t('toastOutFail', { msg: e.message }),'err'); }
-});
-$('#btnOutClear').addEventListener('click', ()=>{
-  state.outDir=null; state.outDirName='';
-  refreshOutPath();
-  $('#btnOutClear').classList.add('hidden');
-});
-
-/* ---------------- 删除原文件 ---------------- */
-$('#swDel').addEventListener('click', ()=>{
-  if($('#swDel').classList.contains('dis')){ toast(t('toastDelUnsupported'), 'err'); return; }
-  const on = !$('#swDel').classList.contains('on');
-  $('#swDel').classList.toggle('on', on);
-  state.deleteOriginals = on;
-  const wb = $('#warnBar');
-  wb.style.display = on ? 'block' : 'none';
-  if(on) wb.textContent = t('warnDel');
-});
-function updateDelUI(){
-  const anyDeletable = state.items.some(i=>i.deletable);
-  const sw = $('#swDel');
-  sw.classList.toggle('dis', !anyDeletable);
-  if(!anyDeletable && sw.classList.contains('on')){
-    sw.classList.remove('on'); state.deleteOriginals=false; $('#warnBar').style.display='none';
-  }
-}
-
-/* ---------------- 转换核心 ---------------- */
-function mp4Offset(u8){
-  const lim = Math.min(64, u8.length-4);
-  for(let i=0;i<lim;i++){
-    if(u8[i]===0x66&&u8[i+1]===0x74&&u8[i+2]===0x79&&u8[i+3]===0x70){ const s=i-4; return s>0?s:0; }
-  }
-  return 0;
-}
-async function readClean(rec){
-  const f = await rec.getFile();
-  const buf = new Uint8Array(await f.arrayBuffer());
-  const off = mp4Offset(buf);
-  return { data: off>0 ? buf.subarray(off) : buf, size: f.size };
-}
-
-async function startConvert(ids){
-  if(state.running || state.queue.length){ toast(t('toastBusy')); return; }
-  const targets = state.items.filter(i=> ids.indexOf(i.id)>=0 && i.status!=='done' && i.status!=='running');
-  if(!targets.length){ toast(t('toastNoPending')); return; }
-  showOverlay(t('ovTitle'), t('ovSub'));
-  try{ await ensureEngine(); }
-  catch(e){ hideOverlay(); toast(t('toastEngineFail', { msg: e.message }), 'err'); return; }
-  hideOverlay();
-  state.cancelFlag = false;
-  targets.forEach(i=>{ i.status='pending'; i.progress=0; i.message=''; });
-  state.queue = targets.map(i=>i.id);
-  state.jobs = [];
-  targets.forEach(i=> state.jobs.push({ videoId:i.id, title:i.title, status:'pending', progress:0, message:'', outName:'', duration:i.duration }));
-  state.sel.clear();
-  render(); openDrawer(); paintDrawer();
-  pump();
-}
-
-async function pump(){
-  if(state.cancelFlag){ finishRun(); return; }
-  if(state.running) return;
-  const id = state.queue.shift();
-  if(!id){ finishRun(); return; }
-  const it = state.items.find(x=>x.id===id);
-  if(!it){ pump(); return; }
-  state.running = it; it.status='running'; it.progress=0; it.message='';
-  upsertJob(it); render(); paintDrawer();
-  try{
-    await convertOne(it);
-    it.status='done'; it.progress=1; it.message='';
-    if(state.deleteOriginals && it.deletable){ await deleteOriginals(it); }
-  }catch(e){
-    if(state.cancelFlag){ it.status='canceled'; it.message=t('msgCanceled'); }
-    else { it.status='error'; it.message = (e && e.message) ? e.message : String(e); }
-  }
-  state.running = null;
-  upsertJob(it); render(); paintDrawer();
-  // 内核每次命令后会终止，回收后由下一轮 ensureEngine() 重新装载
-  await recycleEngine();
-  setTimeout(pump, 30);
-}
-
-function finishRun(){
-  const canceled = state.cancelFlag;
-  state.running = null; state.queue = []; state.cancelFlag = false;
-  render(); paintDrawer();
-  if(canceled) toast(t('toastAllCanceled'), 'err');
-  else {
-    const ok = state.items.filter(i=>i.status==='done').length;
-    if(ok) toast(t('toastDone', { n: ok }), 'ok');
-  }
-}
-
-async function convertOne(it){
-  const ff = await ensureEngine();
-  const tag = Math.random().toString(36).slice(2,8);
-  const inV='iv_'+tag, inA='ia_'+tag, out='out_'+tag+'.mp4';
-  const cleanup = [];
-  try{
-    const v = await readClean(it.vrec); cleanup.push(inV);
-    if(v.size > 1.6*1024*1024*1024) throw new Error(t('errTooLarge'));
-    ff.FS('writeFile', inV, v.data);
-    let args;
-    if(it.kind==='dash' && it.arec){
-      const a = await readClean(it.arec); cleanup.push(inA);
-      ff.FS('writeFile', inA, a.data);
-      args = ['-i', inV, '-i', inA, '-map','0:v:0','-map','1:a:0','-c','copy','-movflags','+faststart', out];
-    } else {
-      args = ['-i', inV, '-map','0:v:0','-map','0:a?','-c','copy','-movflags','+faststart', out];
-    }
-    await ff.run.apply(ff, args);
-    const data = ff.FS('readFile', out);
-    if(!data || !data.length) throw new Error(t('errEmptyOutput'));
-    const name = await uniqueOutName(it);
-    await writeOut(name, data);
-    it.outName = name;
-    cleanup.push(out);
-  } finally {
-    for(const f of cleanup){ try{ ff.FS('unlink', f); }catch(_){} }
-  }
-}
-
-function outBaseName(it){ return sanitizeName(it.title || 'video'); }
-
-async function uniqueOutName(it){
-  const base = outBaseName(it);
-  let name = base + '.mp4';
-  if(state.outDir){
-    let i = 1;
-    while(true){
-      try{ await state.outDir.getFileHandle(name); name = base + ' (' + (++i) + ').mp4'; }
-      catch(_){ break; }
-    }
-  }
-  return name;
-}
-async function writeOut(name, data){
-  if(state.outDir){
-    const fh = await state.outDir.getFileHandle(name, { create:true });
-    const w = await fh.createWritable();
-    await w.write(new Blob([data], { type:'video/mp4' }));
-    await w.close();
-  } else {
-    const url = URL.createObjectURL(new Blob([data], { type:'video/mp4' }));
-    const a = document.createElement('a');
-    a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 20000);
-  }
-}
-async function deleteOriginals(it){
-  for(const d of it.originals){
-    try{ if(d && d.handle && d.handle.removeEntry) await d.handle.removeEntry(d.name); }
-    catch(_){}
-  }
-}
-
-/* ---------------- 取消 ---------------- */
-async function cancelAll(){
-  state.cancelFlag = true;
-  state.queue = [];
-  if(state.running && state.ff){ try{ state.ff.exit(); }catch(_){} resetEngine(); }
-  state.items.forEach(i=>{ if(i.status==='pending') i.status='canceled'; });
-  render(); paintDrawer();
-}
-$('#btnCancelAll').addEventListener('click', ()=>{
-  const active = state.running || state.queue.length || state.items.some(i=>i.status==='pending');
-  if(!active){ toast(t('toastNothingCancel')); return; }
-  if(confirm(t('confirmCancelAll'))){ cancelAll(); toast(t('toastAllCanceled'), 'err'); }
-});
-
-/* ---------------- 转换按钮 ---------------- */
-$('#btnConvert').addEventListener('click', ()=> startConvert([...state.sel]));
-$('#btnAllPending').addEventListener('click', ()=>{
-  const ids = state.items.filter(i=>i.status!=='done').map(i=>i.id);
-  if(!ids.length){ toast(t('toastNoPending')); return; }
-  startConvert(ids);
-});
-
-/* ---------------- 抽屉 ---------------- */
-function upsertJob(it){
-  let j = state.jobs.find(x=>x.videoId===it.id);
-  if(!j){ j = { videoId: it.id, title: it.title, status: it.status, progress: it.progress, message: it.message, outName: it.outName, duration: it.duration }; state.jobs.push(j); }
-  j.status = it.status; j.progress = it.progress||0; j.message = it.message||''; j.outName = it.outName||''; j.title = it.title;
-}
-function paintDrawer(){
-  const order = {running:0,error:1,canceled:2,pending:3,done:4};
-  const arr = state.jobs.slice().sort((a,b)=> (order[a.status]??9)-(order[b.status]??9));
-  const active = arr.filter(j=>j.status==='running').length;
-  $('#fab').classList.toggle('show', arr.length>0);
-  $('#fabCnt').textContent = active || arr.length;
-  $('#jobList').innerHTML = arr.map(j=>{
-    const pct = Math.round((j.progress||0)*100);
-    const label = j.status==='done' ? t('jobDone') : j.status==='error' ? t('jobError') : j.status==='canceled' ? t('jobCanceled') : j.status==='running' ? (pct+'%') : t('jobWaiting');
-    const cls = j.status==='done'?'done':j.status==='error'?'error':'';
-    return '<div class="job '+cls+'">'
-      + '<div class="jt">'+esc(j.title)+'</div>'
-      + '<div class="jrow"><span>'+label+'</span><span>'+esc(j.status==='done'?(j.outName||''):(j.duration?fmtDur(j.duration):''))+'</span></div>'
-      + '<div class="jbar"><i style="width:'+(j.status==='done'?100:pct)+'%"></i></div>'
-      + (j.message?'<div class="jmsg">'+esc(j.message)+'</div>':'')
-      + '</div>';
-  }).join('') || '<div style="color:var(--text3);text-align:center;padding:40px 0">'+t('noTasks')+'</div>';
-}
-$('#fab').addEventListener('click', ()=> $('#drawer').classList.add('open'));
-$('#btnCloseDrawer').addEventListener('click', ()=> $('#drawer').classList.remove('open'));
-function openDrawer(){ $('#drawer').classList.add('open'); }
-
-/* ---------------- 遮罩 ---------------- */
-function showOverlay(t,s){ $('#ovTitle').textContent=t; $('#ovSub').textContent=s||''; $('#overlay').classList.add('show'); }
-function hideOverlay(){ $('#overlay').classList.remove('show'); }
 
 /* ---------------- 语言切换 ---------------- */
 $('#btnLang').addEventListener('click', ()=> setLang(lang==='zh' ? 'en' : 'zh', true));
 
-/* 预热引擎（不阻塞、不显示状态） */
-if('requestIdleCallback' in window){
-  requestIdleCallback(()=>{ ensureEngine().catch(()=>{}); }, { timeout: 4000 });
-} else {
-  setTimeout(()=>ensureEngine().catch(()=>{}), 2500);
-}
 
 /* ---------------- 外观主题（浅色 / 深色 / 跟随系统） ---------------- */
 const THEME_KEY = 'vc2_theme';

@@ -15,3 +15,9 @@ macapp/vendor/ffmpeg
 # 本地截图（视觉验证用）
 shots/
 __testdata/
+
+# Local Netlify folder
+.netlify
+
+# 部署临时目录（deploy.sh 拼装产生）
+.deploy/
