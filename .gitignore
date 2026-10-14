@@ -11,3 +11,7 @@ macapp/vendor/ffmpeg
 
 # macOS
 .DS_Store
+
+# 本地截图（视觉验证用）
+shots/
+__testdata/
