@@ -287,6 +287,34 @@ else ok('引用 key 有译文', used.size + ' 个引用');
   }
 }
 
+// 11) Netlify HUD 徽章必须被关掉
+//     徽章是 Netlify 注入的 fixed iframe（右下角，z-index 21亿），会盖住底部按钮，
+//     且没有拖动实现、位置写死。我们只能写自己站的 localStorage 让它不渲染。
+//     两个页面都要写，且必须在 <head> 同步执行，晚了徽章就画出来了。
+{
+  const HUDS = [['宣传页', FILE], ['转换页', path.join(ROOT, 'app', 'index.html')]];
+  const probs = [];
+  for (const [nm, f] of HUDS) {
+    if (!fs.existsSync(f)) { probs.push(nm + ' 不存在'); continue; }
+    const a = fs.readFileSync(f, 'utf8');
+    const iPub = a.indexOf("'nl-hud:public:v1'");
+    const iMine = a.indexOf('localStorage.setItem');
+    const iStyle = a.indexOf('<style>');
+    if (iPub < 0) probs.push(nm + " 没有写 nl-hud:public:v1");
+    else {
+      // 两条记录都要有：公开访客 + 站点所有者
+      if (a.indexOf("'nl-hud:owner-private:v1'") < 0) probs.push(nm + ' 缺 owner-private 那条');
+      // 必须在 <style> 之前（<head> 里同步）
+      if (iStyle >= 0 && iPub > iStyle) probs.push(nm + ' 写标记的代码在 <style> 之后，徽章会先闪出来');
+      // 必须被 try/catch 包住：隐私模式 localStorage 不可写
+      const around = a.slice(Math.max(0, iMine - 40), iPub + 200);
+      if (!/try\s*\{/.test(around)) probs.push(nm + ' 没包 try/catch，隐私模式可能报错');
+    }
+  }
+  if (probs.length) bad('Netlify 徽章已关', probs.join('  |  '));
+  else ok('Netlify 徽章已关', '两页都在 <head> 写好隐藏标记');
+}
+
 console.log('');
 if (failed) { console.log('  ✗ ' + failed + ' 项未通过'); process.exit(1); }
 console.log('  全部通过 ✅');

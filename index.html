@@ -20,6 +20,21 @@
   el.setAttribute('data-theme', dark ? 'dark' : 'light');
   el.style.colorScheme = dark ? 'dark' : 'light';
 })();
+/* 关掉 Netlify 自己注入的 "Powered by Netlify" 浮层。
+   它是 Netlify 的 HUD：一个 position:fixed 的 iframe，钉死在右下角
+   （bottom:0; right:0; z-index:2147483645），会盖住底部的操作按钮；
+   它的样式里没有任何拖动逻辑，位置是写死的，所以只能关掉、挪不走。
+
+   机制：HUD 脚本启动时读本站 localStorage 的 nl-hud:<variant>:v1，
+   若为 "hidden" 就直接 return，连 iframe 都不创建。HUD 自己那个
+   「隐藏」按钮走 postMessage 写的也是同一个 key。
+   跨域限制：我们改不了 iframe 里的内容，但能写自己站的 localStorage，
+   所以在这里同步写好标记，让徽章来不及渲染。
+   用 try/catch 包住：隐私模式下 localStorage 不可写，不能因此弄坏页面。 */
+try{
+  localStorage.setItem('nl-hud:public:v1', 'hidden');        // 公开访客看到的徽章
+  localStorage.setItem('nl-hud:owner-private:v1', 'hidden'); // 站点所有者自己访问时的工具条
+}catch(_){}
 </script>
 <style>
 /* 全部自包含：不引外部字体/图片/脚本。
