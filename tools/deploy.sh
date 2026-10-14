@@ -1,7 +1,8 @@
 #!/bin/bash
 # 重新部署网站到 Netlify（vconverter.netlify.app）
 #
-# 结构：index.html 是介绍页，app/ 里才是转换界面（和 EchoLingo 一样）。
+# 结构：index.html 是宣传页（暗色，风格对齐 echoling），app/ 里才是转换界面。
+# 部署前会先跑 tools/check-vc-i18n.mjs，不通过就不部署。
 set -e
 cd "$(dirname "$0")/.." || exit 1
 
@@ -10,6 +11,11 @@ NTL="/Users/orion/WorkBuddy/2026-10-12-11-40-26/english-video-reader/desktop/.to
 
 export HOME="$NCLI_HOME"
 export PATH="/Users/orion/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin:$PATH"
+
+echo "== 0) 提交前静态校验 =="
+NODE="/Users/orion/.dsh/dsh-runtimes/dsh-primary-runtime/dependencies/node/bin/node"
+"$NODE" tools/check-vc-i18n.mjs || { echo "  校验未通过，中止部署"; exit 1; }
+echo ""
 
 echo "== 1) 拼装部署目录 =="
 rm -rf .deploy
@@ -43,3 +49,5 @@ echo "== 3) 核验 =="
 curl -s -o /dev/null -w "  介绍页 /            %{http_code}\n" https://vconverter.netlify.app/
 curl -s -o /dev/null -w "  转换页 /app/        %{http_code}\n" https://vconverter.netlify.app/app/
 curl -s -o /dev/null -w "  wasm 引擎           %{http_code}  %{content_type}\n" https://vconverter.netlify.app/app/vendor/ffmpeg-core.wasm
+echo -n "  线上介绍页标题       "
+curl -s --max-time 20 https://vconverter.netlify.app/ | grep -o '<title>[^<]*</title>' | head -1

@@ -1,808 +1,562 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Video Converter · B站视频转换器</title>
-<meta name="description" content="把 B 站下载的 m4s 合并成 MP4。原质量无损，全程在本机完成，视频不会上传。也可下载 macOS 原生应用。">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Video Converter · B 站视频转换器</title>
+<meta name="description" content="把 B 站下载的音视频分离 .m4s 合并成 MP4。只换封装不重新编码，画质不变，全程在本机完成。">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231f6feb'/%3E%3Ctext x='16' y='22' font-family='sans-serif' font-size='15' font-weight='700' fill='white' text-anchor='middle'%3EVC%3C/text%3E%3C/svg%3E">
 <style>
-/* ============================================================
-   设计基调：克制、留白、清晰的字阶
-   浅色 / 深色跟随系统，可用顶栏按钮切换
-   ============================================================ */
-:root{
-  --bg:#fbfbfd;
-  --bg-alt:#ffffff;
-  --card:#ffffff;
-  --card-alt:#f5f5f7;
-  --text:#1d1d1f;
-  --text2:#6e6e73;
-  --text3:#86868b;
-  --line:rgba(0,0,0,.10);
-  --line-soft:rgba(0,0,0,.06);
-  --accent:#0071e3;
-  --accent-hover:#0077ed;
-  --accent-soft:rgba(0,113,227,.08);
-  --ok:#1d8a4e;
-  --warn:#9a6700;
-  --err:#c4342a;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 4px 14px rgba(0,0,0,.05);
-  --shadow-md:0 2px 6px rgba(0,0,0,.05), 0 14px 40px rgba(0,0,0,.08);
-  --radius:18px;
-  --radius-sm:12px;
-  --radius-pill:980px;
-  --maxw:1040px;
-  --ease:cubic-bezier(.4,0,.2,1);
+/* 全部自包含：不引外部字体/图片/脚本。
+   一是断网也能正常显示，二是避免任何跨域依赖。 */
+html:not([data-lang]) body { visibility: hidden; }   /* 语言没定好之前先别画 */
+:root {
+  --bg: #0e1116; --panel: #161a21; --panel-2: #1b2029;
+  --line: #262c36; --line-2: #333a46;
+  --text: #e8eef8; --text-2: #9aa6b8; --text-3: #6b7688;
+  --brand: #2f7ff5; --brand-2: #1f6feb; --brand-soft: rgba(47,127,245,.12);
+  --ok: #2ea36a; --warn: #d9a441;
+  --radius: 14px; --maxw: 1180px;
 }
-@media (prefers-color-scheme:dark){
-  :root:not([data-theme="light"]){
-    --bg:#000000;
-    --bg-alt:#0a0a0c;
-    --card:#16161a;
-    --card-alt:#1d1d20;
-    --text:#f5f5f7;
-    --text2:#a1a1a6;
-    --text3:#86868b;
-    --line:rgba(255,255,255,.14);
-    --line-soft:rgba(255,255,255,.08);
-    --accent:#2997ff;
-    --accent-hover:#47a6ff;
-    --accent-soft:rgba(41,151,255,.12);
-    --ok:#30d158;
-    --warn:#ffd60a;
-    --err:#ff453a;
-    --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
-    --shadow-md:0 2px 6px rgba(0,0,0,.5), 0 14px 40px rgba(0,0,0,.45);
-  }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0; background: var(--bg); color: var(--text);
+  font: 16px/1.7 -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
+        "Microsoft YaHei", "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
-:root[data-theme="dark"]{
-  --bg:#000000;
-  --bg-alt:#0a0a0c;
-  --card:#16161a;
-  --card-alt:#1d1d20;
-  --text:#f5f5f7;
-  --text2:#a1a1a6;
-  --text3:#86868b;
-  --line:rgba(255,255,255,.14);
-  --line-soft:rgba(255,255,255,.08);
-  --accent:#2997ff;
-  --accent-hover:#47a6ff;
-  --accent-soft:rgba(41,151,255,.12);
-  --ok:#30d158;
-  --warn:#ffd60a;
-  --err:#ff453a;
-  --shadow-sm:0 1px 2px rgba(0,0,0,.4), 0 4px 14px rgba(0,0,0,.3);
-  --shadow-md:0 2px 6px rgba(0,0,0,.5), 0 14px 40px rgba(0,0,0,.45);
-}
+a { color: var(--brand); text-decoration: none; }
+a:hover { text-decoration: underline; }
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
 
-*{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
-body{
-  background:var(--bg);
-  color:var(--text);
-  font:17px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro SC","SF Pro Text","PingFang SC","Helvetica Neue",Arial,sans-serif;
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-  transition:background-color .3s var(--ease), color .3s var(--ease);
+header {
+  position: sticky; top: 0; z-index: 50;
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  background: rgba(14,17,22,.82); border-bottom: 1px solid var(--line);
 }
-a{color:var(--accent);text-decoration:none}
-a:hover{text-decoration:underline}
-.hidden{display:none !important}
-.spacer{flex:1}
+.nav { display: flex; align-items: center; gap: 14px; height: 62px; }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: .2px; }
+.logo .mark {
+  width: 30px; height: 30px; border-radius: 8px; flex: 0 0 auto;
+  background: linear-gradient(160deg, #3d8bf8, #1a5fd0);
+  display: grid; place-items: center; color: #fff; font-size: 13px; font-weight: 800;
+}
+.logo .sub { font-size: 12px; color: var(--text-3); font-weight: 400; margin-left: 3px; }
+.nav-links { margin-left: auto; display: flex; align-items: center; gap: 20px; font-size: 14px; }
+.nav-links a { color: var(--text-2); }
+.nav-links a:hover { color: var(--text); text-decoration: none; }
 
-/* ---------- 顶栏 ---------- */
-.nav{
-  position:sticky;top:0;z-index:60;
-  background:color-mix(in srgb, var(--bg) 82%, transparent);
-  backdrop-filter:saturate(180%) blur(20px);
-  -webkit-backdrop-filter:saturate(180%) blur(20px);
-  border-bottom:1px solid var(--line-soft);
+.lang-seg { display: inline-flex; background: var(--panel-2); border-radius: 8px; padding: 2px; gap: 2px; }
+.lang-seg button {
+  border: 0; background: transparent; padding: 5px 11px; border-radius: 6px;
+  cursor: pointer; font-size: 12.5px; font-weight: 600; color: var(--text-3);
+  font-family: inherit;
 }
-.nav-in{
-  max-width:var(--maxw);margin:0 auto;
-  height:48px;padding:0 22px;
-  display:flex;align-items:center;gap:14px;
-}
-.brand{
-  font-size:17px;font-weight:600;letter-spacing:-.01em;
-  color:var(--text);display:flex;align-items:center;gap:8px;
-}
-.brand:hover{text-decoration:none}
-.brand .mark{
-  width:22px;height:22px;border-radius:6px;
-  background:linear-gradient(135deg,var(--accent),#5ac8fa);
-  display:grid;place-items:center;color:#fff;
-}
-.brand .mark svg{width:13px;height:13px}
-.nav-links{display:flex;gap:2px;margin-left:10px}
-.nav-links a{
-  font-size:12.5px;color:var(--text2);padding:6px 11px;border-radius:var(--radius-pill);
-  transition:color .15s var(--ease), background-color .15s var(--ease);
-}
-.nav-links a:hover{color:var(--text);background:var(--accent-soft);text-decoration:none}
-.nav-act{display:flex;align-items:center;gap:7px;margin-left:auto}
-.iconbtn{
-  width:30px;height:30px;border-radius:var(--radius-pill);
-  border:1px solid var(--line);background:transparent;color:var(--text2);
-  display:grid;place-items:center;cursor:pointer;
-  transition:all .15s var(--ease);
-}
-.iconbtn:hover{color:var(--text);border-color:var(--text3)}
-.iconbtn svg{width:14px;height:14px}
-.langbtn{
-  height:30px;padding:0 11px;border-radius:var(--radius-pill);
-  border:1px solid var(--line);background:transparent;color:var(--text2);
-  font:500 12px/1 inherit;cursor:pointer;letter-spacing:.02em;
-  transition:all .15s var(--ease);
-}
-.langbtn:hover{color:var(--text);border-color:var(--text3)}
-.theme-ic{display:none}
-:root[data-theme-resolved="light"] .theme-ic-light{display:block}
-:root[data-theme-resolved="dark"] .theme-ic-dark{display:block}
-:root[data-theme-resolved="auto"] .theme-ic-auto{display:block}
+.lang-seg button.active { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.4); }
 
-/* ---------- 通用容器 ---------- */
-.wrap{max-width:var(--maxw);margin:0 auto;padding:0 22px}
-.sec{padding:72px 0}
-.sec-tight{padding:64px 0}
-.eyebrow{
-  font-size:14px;font-weight:600;color:var(--accent);
-  letter-spacing:-.01em;margin-bottom:10px;
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 9px 16px; border-radius: 9px; border: 1px solid var(--line-2);
+  background: var(--panel); color: var(--text); font-size: 14px; font-weight: 500;
+  cursor: pointer; white-space: nowrap;
 }
-h1{
-  font-size:clamp(34px,5.4vw,56px);line-height:1.06;
-  font-weight:600;letter-spacing:-.021em;
-}
-h2{
-  font-size:clamp(26px,3.6vw,40px);line-height:1.1;
-  font-weight:600;letter-spacing:-.019em;
-}
-h3{font-size:20px;line-height:1.25;font-weight:600;letter-spacing:-.012em}
-.lede{font-size:clamp(17px,2vw,21px);line-height:1.45;color:var(--text2);font-weight:400;letter-spacing:-.006em}
-.muted{color:var(--text2)}
-.tiny{font-size:13px;color:var(--text3)}
+.btn:hover { background: var(--panel-2); text-decoration: none; }
+.btn-primary { background: var(--brand-2); border-color: var(--brand-2); color: #fff; }
+.btn-primary:hover { background: #1a60d0; }
+.btn-lg { padding: 12px 22px; font-size: 15px; }
 
-/* ---------- Hero ---------- */
-.hero{padding:112px 0 96px;text-align:center}
-.hero-actions{
-  display:flex;gap:14px;justify-content:center;flex-wrap:wrap;
-  margin-top:32px;
+.hero { padding: 74px 0 54px; text-align: center; }
+.badge {
+  display: inline-flex; align-items: center; gap: 7px; margin-bottom: 20px;
+  padding: 5px 13px; border-radius: 999px; font-size: 13px;
+  border: 1px solid var(--line-2); background: var(--panel); color: var(--text-2);
 }
-.hero-note{margin-top:20px;font-size:14px;color:var(--text3)}
-.hero h1{max-width:15ch;margin:0 auto}
-.hero .lede{max-width:46ch;margin:18px auto 0}
-.hero-badge{
-  display:inline-flex;align-items:center;gap:7px;
-  font-size:12.5px;font-weight:500;color:var(--text2);
-  background:var(--card-alt);border:1px solid var(--line-soft);
-  padding:6px 13px;border-radius:var(--radius-pill);margin-bottom:20px;
-}
-.hero-badge .dot{width:6px;height:6px;border-radius:50%;background:var(--ok)}
+.badge .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); }
+h1 { margin: 0 0 18px; font-size: clamp(30px, 5vw, 50px); line-height: 1.22; letter-spacing: -.5px; font-weight: 800; }
+h1 .hl { color: var(--brand); }
+.lede { margin: 0 auto 30px; max-width: 690px; font-size: clamp(15px, 2vw, 17.5px); color: var(--text-2); }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-bottom: 14px; }
+.cta-note { font-size: 13px; color: var(--text-3); max-width: 640px; margin: 0 auto; }
 
-/* ---------- 工具区 ---------- */
-.tool{
-  background:var(--card);border:1px solid var(--line-soft);
-  border-radius:var(--radius);box-shadow:var(--shadow-md);
-  overflow:hidden;
-}
-.tool-head{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:14px 18px;border-bottom:1px solid var(--line-soft);
-}
-.tool-body{padding:18px}
+section { padding: 66px 0; }
+section + section { border-top: 1px solid var(--line); }
+.sec-head { max-width: 720px; margin-bottom: 38px; }
+.sec-head h2 { margin: 0 0 10px; font-size: clamp(22px, 3.4vw, 30px); font-weight: 750; letter-spacing: -.3px; }
+.sec-head p { margin: 0; color: var(--text-2); font-size: 15.5px; }
 
-/* 按钮 */
-.btn{
-  appearance:none;border:1px solid var(--line);background:var(--card);
-  color:var(--text);font:500 14px/1 inherit;
-  padding:10px 17px;border-radius:var(--radius-pill);
-  cursor:pointer;display:inline-flex;align-items:center;gap:7px;
-  transition:all .15s var(--ease);white-space:nowrap;
-}
-.btn:hover{background:var(--card-alt);border-color:var(--text3)}
-.btn:active{transform:scale(.98)}
-.btn svg{width:14px;height:14px;flex:none}
-.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
-.btn.primary:hover{background:var(--accent-hover);border-color:var(--accent-hover)}
-.btn.ghost{background:transparent;border-color:transparent;color:var(--text2);padding:8px 12px}
-.btn.ghost:hover{background:var(--card-alt);border-color:transparent;color:var(--text)}
-.btn:disabled{opacity:.36;cursor:not-allowed;transform:none}
-.btn:disabled:hover{background:var(--card);border-color:var(--line)}
-.btn.primary:disabled:hover{background:var(--accent);border-color:var(--accent)}
-.btn-sm{padding:7px 13px;font-size:13px}
+.grid { display: grid; gap: 16px; }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); }
 
-/* 拖拽区 */
-.dropbig{
-  border:1.5px dashed var(--line);
-  border-radius:var(--radius-sm);
-  padding:56px 26px;text-align:center;
-  transition:all .2s var(--ease);
-  background:var(--card-alt);
-}
-.dropbig.over{border-color:var(--accent);background:var(--accent-soft)}
-.dropbig .di{
-  width:46px;height:46px;margin:0 auto 16px;border-radius:14px;
-  background:var(--card);border:1px solid var(--line-soft);
-  display:grid;place-items:center;color:var(--accent);
-  box-shadow:var(--shadow-sm);
-}
-.dropbig .di svg{width:21px;height:21px}
-.dropbig .dt{font-size:18px;font-weight:600;letter-spacing:-.012em}
-.dropbig .ds{margin-top:9px;font-size:13.5px;line-height:1.6;color:var(--text2);max-width:52ch;margin-left:auto;margin-right:auto}
-.dropacts{display:flex;gap:10px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+.card { padding: 22px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.card h3 { margin: 0 0 9px; font-size: 16.5px; font-weight: 650; }
+.card p { margin: 0; color: var(--text-2); font-size: 14.5px; }
+.card .ico { width: 34px; height: 34px; border-radius: 9px; margin-bottom: 13px; background: var(--brand-soft); color: var(--brand); display: grid; place-items: center; font-size: 17px; }
+.card.problem { border-color: rgba(217,164,65,.3); }
+.card.problem .ico { background: rgba(217,164,65,.13); color: var(--warn); }
+.card.solve { border-color: rgba(46,163,106,.3); }
+.card.solve .ico { background: rgba(46,163,106,.13); color: var(--ok); }
 
-/* 统计 */
-.stats{display:flex;gap:26px;flex-wrap:wrap;padding:2px 2px 0}
-.stat b{display:block;font-size:24px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
-.stat i{font-style:normal;font-size:12.5px;color:var(--text3)}
+kbd {
+  display: inline-block; min-width: 20px; padding: 2px 7px; margin: 0 1px;
+  border-radius: 6px; border: 1px solid var(--line-2); border-bottom-width: 2px;
+  background: var(--panel-2); font: 600 12.5px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--text);
+}
+table.kv { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+table.kv td { padding: 9px 0; border-bottom: 1px solid var(--line); color: var(--text-2); }
+table.kv td:first-child { width: 190px; color: var(--text); }
+table.kv tr:last-child td { border-bottom: 0; }
 
-/* 工具栏 */
-.toolbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
-.search{
-  flex:1;min-width:190px;display:flex;align-items:center;gap:8px;
-  background:var(--card-alt);border:1px solid transparent;
-  border-radius:var(--radius-pill);padding:8px 14px;
-  transition:all .15s var(--ease);
+pre {
+  margin: 0 0 14px; padding: 15px 17px; border-radius: 11px; overflow-x: auto;
+  background: #0a0d12; border: 1px solid var(--line);
+  font: 13px/1.65 ui-monospace, SFMono-Regular, Menlo, monospace; color: #cfe0f5;
 }
-.search:focus-within{background:var(--card);border-color:var(--accent)}
-.search svg{width:13px;height:13px;color:var(--text3);flex:none}
-.search input{flex:1;border:0;background:transparent;color:var(--text);font:400 14px/1.4 inherit;outline:none;min-width:0}
-.search input::placeholder{color:var(--text3)}
-.tabs{display:flex;gap:2px;background:var(--card-alt);border-radius:var(--radius-pill);padding:3px}
-.tabs button{
-  appearance:none;border:0;background:transparent;color:var(--text2);
-  font:500 13px/1 inherit;padding:7px 14px;border-radius:var(--radius-pill);
-  cursor:pointer;transition:all .15s var(--ease);
-}
-.tabs button.on{background:var(--card);color:var(--text);box-shadow:var(--shadow-sm)}
-select{
-  appearance:none;border:1px solid var(--line);background:var(--card);color:var(--text);
-  font:400 13px/1 inherit;padding:8px 13px;border-radius:var(--radius-pill);
-  cursor:pointer;outline:none;
-}
-
-/* 选项行 */
-.options{display:flex;flex-direction:column;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line-soft)}
-.opt{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13.5px;color:var(--text2)}
-.outpath{
-  font-size:12.5px;padding:5px 11px;border-radius:var(--radius-pill);
-  background:var(--accent-soft);color:var(--accent);
-  max-width:44ch;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-}
-.outpath.unset{background:var(--card-alt);color:var(--text3)}
-.switch{
-  width:44px;height:26px;border-radius:var(--radius-pill);background:var(--card-alt);
-  border:1px solid var(--line-soft);position:relative;cursor:pointer;transition:all .2s var(--ease);flex:none;
-}
-.switch::after{
-  content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;
-  background:var(--card);box-shadow:var(--shadow-sm);transition:all .2s var(--ease);
-}
-.switch.on{background:var(--ok);border-color:var(--ok)}
-.switch.on::after{left:20px;background:#fff}
-
-/* 警告条 */
-.warnbar{
-  font-size:13px;line-height:1.5;color:var(--warn);
-  background:color-mix(in srgb, var(--warn) 9%, transparent);
-  border:1px solid color-mix(in srgb, var(--warn) 26%, transparent);
-  border-radius:var(--radius-sm);padding:11px 15px;margin:0 18px 14px;
-}
-.warnbar:empty{display:none}
-
-/* 列表 */
-.list{padding:16px 18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(232px,1fr));gap:14px}
-.card{
-  background:var(--card);border:1px solid var(--line-soft);border-radius:var(--radius-sm);
-  overflow:hidden;transition:all .18s var(--ease);position:relative;
-}
-.card:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
-.card.sel{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent-soft)}
-.card .cov{aspect-ratio:16/9;background:var(--card-alt);position:relative;overflow:hidden}
-.card .cov img{width:100%;height:100%;object-fit:cover;display:block}
-.card .cov .ph{width:100%;height:100%;display:grid;place-items:center;color:var(--text3)}
-.card .cov .ph svg{width:26px;height:26px}
-.card .pick{
-  position:absolute;top:9px;left:9px;width:21px;height:21px;border-radius:50%;
-  border:1.5px solid rgba(255,255,255,.85);background:rgba(0,0,0,.28);
-  cursor:pointer;display:grid;place-items:center;color:#fff;transition:all .15s var(--ease);
-}
-.card .pick svg{width:11px;height:11px;opacity:0;transition:opacity .15s var(--ease)}
-.card.sel .pick{background:var(--accent);border-color:var(--accent)}
-.card.sel .pick svg{opacity:1}
-.card .badge{
-  position:absolute;top:9px;right:9px;font-size:11px;font-weight:500;
-  padding:4px 9px;border-radius:var(--radius-pill);color:#fff;
-  background:rgba(0,0,0,.55);backdrop-filter:blur(8px);
-}
-.card .badge.done{background:var(--ok)}
-.card .badge.error{background:var(--err)}
-.card .badge.canceled{background:var(--text3)}
-.card .meta{padding:12px 13px}
-.card .tt{
-  font-size:13.5px;font-weight:500;line-height:1.4;letter-spacing:-.006em;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
-  min-height:2.8em;
-}
-.card .sub{margin-top:6px;font-size:12px;color:var(--text3);display:flex;gap:8px;flex-wrap:wrap}
-.bar{height:3px;background:var(--card-alt);overflow:hidden}
-.bar i{display:block;height:100%;background:var(--accent);transition:width .25s var(--ease)}
-.bar.done i{background:var(--ok)}
-.bar.err i{background:var(--err)}
-.empty-msg{text-align:center;padding:26px;color:var(--text3);font-size:14px}
-
-/* 操作条 */
-.actionbar{
-  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
-  padding:13px 18px;border-top:1px solid var(--line-soft);background:var(--card-alt);
-}
-.selinfo{font-size:13px;color:var(--text2)}
-.selinfo b{color:var(--text);font-weight:600}
-
-/* ---------- 特性 ---------- */
-.feat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:20px;margin-top:44px}
-.feat{
-  background:var(--card-alt);border-radius:var(--radius);padding:30px 26px;
-  border:1px solid var(--line-soft);
-}
-.feat .fi{
-  width:40px;height:40px;border-radius:12px;background:var(--card);
-  border:1px solid var(--line-soft);display:grid;place-items:center;
-  color:var(--accent);margin-bottom:16px;
-}
-.feat .fi svg{width:19px;height:19px}
-.feat h3{margin-bottom:8px}
-.feat p{font-size:14.5px;line-height:1.6;color:var(--text2)}
+pre .c { color: var(--text-3); }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .92em; }
+p code, li code { background: var(--panel-2); padding: 1.5px 6px; border-radius: 5px; border: 1px solid var(--line); }
+ul.plain { margin: 0; padding-left: 20px; color: var(--text-2); font-size: 14.5px; }
+ul.plain li { margin-bottom: 7px; }
 
 /* 数字条 */
-.numbers{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:2px;
-  margin-top:46px;border-radius:var(--radius);overflow:hidden;
-  background:var(--line-soft);
-}
-.numbers .n{background:var(--card-alt);padding:26px 20px;text-align:center}
-.numbers b{display:block;font-size:30px;font-weight:600;letter-spacing:-.022em;line-height:1.1}
-.numbers i{font-style:normal;font-size:12.5px;color:var(--text3);display:block;margin-top:6px}
+.numbers { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.numbers div { background: var(--panel); padding: 24px 18px; text-align: center; }
+.numbers b { display: block; font-size: 30px; font-weight: 750; letter-spacing: -.6px; line-height: 1.15; color: var(--text); }
+.numbers span { display: block; margin-top: 5px; font-size: 13px; color: var(--text-3); }
 
-/* ---------- 下载 ---------- */
-.dl-card{
-  background:var(--card-alt);border:1px solid var(--line-soft);
-  border-radius:var(--radius);padding:44px 40px;text-align:center;
-}
-.dl-card .appicon{
-  width:76px;height:76px;border-radius:18px;margin:0 auto 20px;
-  background:linear-gradient(135deg,var(--accent),#5ac8fa);
-  display:grid;place-items:center;box-shadow:var(--shadow-md);color:#fff;
-}
-.dl-card .appicon svg{width:36px;height:36px}
-.dl-card .lede{max-width:44ch;margin:14px auto 0}
-.dl-actions{display:flex;gap:12px;justify-content:center;margin-top:28px;flex-wrap:wrap}
-.btn-lg{padding:14px 28px;font-size:15px}
-.dl-meta{
-  display:flex;gap:24px;justify-content:center;flex-wrap:wrap;
-  margin-top:22px;font-size:12.5px;color:var(--text3);
-}
-.dl-meta span{display:flex;align-items:center;gap:6px}
-details.gate{
-  max-width:620px;margin:32px auto 0;text-align:left;
-  border-top:1px solid var(--line-soft);padding-top:22px;
-}
-details.gate summary{
-  cursor:pointer;font-size:14px;font-weight:500;color:var(--accent);
-  list-style:none;display:flex;align-items:center;gap:7px;
-}
-details.gate summary::-webkit-details-marker{display:none}
-details.gate summary::after{
-  content:'';width:6px;height:6px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;
-  transform:rotate(45deg);transition:transform .2s var(--ease);margin-left:2px;
-}
-details.gate[open] summary::after{transform:rotate(-135deg)}
-details.gate summary:hover{text-decoration:underline}
-.gate-body{margin-top:14px;font-size:14px;line-height:1.7;color:var(--text2)}
-.gate-body ol{margin:10px 0 0 20px;display:flex;flex-direction:column;gap:7px}
-.gate-body code{
-  font:500 12.5px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
-  background:var(--card);border:1px solid var(--line-soft);
-  padding:2px 7px;border-radius:6px;color:var(--text);
-}
-.gate-body strong{color:var(--text);font-weight:600}
+/* 下载卡 */
+.dl { padding: 30px; border-radius: var(--radius); background: var(--panel); border: 1px solid var(--line); }
+.dl .row { display: flex; flex-wrap: wrap; gap: 26px; align-items: center; }
+.dl .ico-lg { width: 54px; height: 54px; border-radius: 14px; background: linear-gradient(160deg,#3d8bf8,#1a5fd0); display: grid; place-items: center; color: #fff; font: 800 20px/1 ui-monospace, Menlo, monospace; flex: 0 0 auto; }
+.dl .meta { flex: 1 1 260px; }
+.dl .meta h3 { margin: 0 0 5px; font-size: 19px; font-weight: 700; }
+.dl .meta p { margin: 0; color: var(--text-2); font-size: 14.5px; }
+.dl .acts { display: flex; gap: 10px; flex-wrap: wrap; }
+.dl .facts { margin: 16px 0 0; font-size: 13px; color: var(--text-3); }
 
-/* ---------- 页脚 ---------- */
-footer{border-top:1px solid var(--line-soft);padding:40px 0 54px;margin-top:22px}
-.foot-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--text3)}
-.foot-links{display:flex;gap:18px;margin-left:auto;flex-wrap:wrap}
-.foot-links a{color:var(--text3)}
-.foot-links a:hover{color:var(--text)}
+details.gate { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 16px; }
+details.gate summary { cursor: pointer; font-size: 14px; color: var(--brand); font-weight: 500; }
+details.gate summary:hover { text-decoration: underline; }
+details.gate ol { margin: 14px 0 0; padding-left: 22px; color: var(--text-2); font-size: 14.5px; }
+details.gate li { margin-bottom: 9px; }
 
-/* ---------- FAB / 抽屉 / 遮罩 / Toast ---------- */
-.fab{
-  position:fixed;right:22px;bottom:22px;z-index:70;
-  display:none;align-items:center;gap:8px;
-  background:var(--accent);color:#fff;border:0;
-  font:500 13.5px/1 inherit;padding:12px 18px;border-radius:var(--radius-pill);
-  box-shadow:var(--shadow-md);cursor:pointer;transition:all .18s var(--ease);
-}
-.fab:hover{background:var(--accent-hover)}
-.fab.show{display:inline-flex}
-.fab svg{width:14px;height:14px}
-.fab .cnt{
-  background:rgba(255,255,255,.25);border-radius:var(--radius-pill);
-  padding:2px 7px;font-size:11.5px;min-width:19px;text-align:center;
-}
-.drawer{
-  position:fixed;top:0;right:0;bottom:0;width:min(392px,92vw);z-index:80;
-  background:var(--card);border-left:1px solid var(--line-soft);
-  box-shadow:var(--shadow-md);
-  transform:translateX(100%);transition:transform .28s var(--ease);
-  display:flex;flex-direction:column;
-}
-.drawer.open{transform:translateX(0)}
-.drawer header{padding:16px 18px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center}
-.dtitle{display:flex;align-items:center;gap:9px;font-size:15px;font-weight:600;width:100%}
-.dtitle svg{width:15px;height:15px;color:var(--text3)}
-.dbody{flex:1;overflow-y:auto;padding:14px 18px;display:flex;flex-direction:column;gap:11px}
-.job{
-  border:1px solid var(--line-soft);border-radius:var(--radius-sm);
-  padding:12px 13px;background:var(--card-alt);
-}
-.job .jt{font-size:13.5px;font-weight:500;line-height:1.4;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
-.job .js{font-size:12px;color:var(--text3);margin-top:5px;display:flex;gap:8px;align-items:center}
-.overlay{
-  position:fixed;inset:0;z-index:100;display:none;place-items:center;
-  background:color-mix(in srgb, var(--bg) 72%, transparent);
-  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-}
-.overlay.show{display:grid}
-.ovcard{text-align:center;padding:24px}
-.sp1{
-  width:30px;height:30px;margin:0 auto 18px;border-radius:50%;
-  border:2.5px solid var(--line);border-top-color:var(--accent);
-  animation:spin .8s linear infinite;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.ot{font-size:16px;font-weight:600}
-.os{font-size:13.5px;color:var(--text2);margin-top:7px;max-width:40ch}
-.toast{
-  position:fixed;left:50%;bottom:34px;transform:translate(-50%,16px);z-index:110;
-  background:var(--text);color:var(--bg);
-  font-size:13.5px;padding:11px 19px;border-radius:var(--radius-pill);
-  box-shadow:var(--shadow-md);opacity:0;pointer-events:none;
-  transition:all .26s var(--ease);max-width:88vw;text-align:center;
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.toast.err{background:var(--err);color:#fff}
-.toast.ok{background:var(--ok);color:#fff}
+footer { padding: 40px 0 56px; border-top: 1px solid var(--line); color: var(--text-3); font-size: 13.5px; }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 10px 26px; align-items: center; }
+footer a { color: var(--text-2); }
 
-/* ---------- 响应式 ---------- */
-@media (max-width:760px){
-  .nav-links{display:none}
-  .sec{padding:60px 0}
-  .hero{padding:52px 0 30px}
-  .dropbig{padding:40px 18px}
-  .dl-card{padding:32px 22px}
-  .tool-head,.toolbar,.options,.actionbar{padding-left:14px;padding-right:14px}
-  .list{padding:14px}
-  .warnbar{margin-left:14px;margin-right:14px}
-  .stats{gap:18px}
+@media (max-width: 860px) {
+  .nav-links a:not(.btn) { display: none; }
+  .hero { padding: 46px 0 36px; }
+  section { padding: 48px 0; }
+  table.kv td:first-child { width: 130px; }
 }
-@media (prefers-reduced-motion:reduce){
-  *{animation-duration:.01ms !important;transition-duration:.01ms !important}
-  html{scroll-behavior:auto}
+
+/* 窄屏：三语切换多了一个按钮，380px 附近会把导航挤出横向滚动条。
+   收窄内边距、缩小字号，并在极窄时让 logo 副标题先让位。 */
+@media (max-width: 520px) {
+  .wrap { padding: 0 16px; }
+  .nav { gap: 10px; }
+  .lang-seg button { padding: 5px 8px; font-size: 12px; }
+}
+@media (max-width: 400px) {
+  .logo .sub { display: none; }
+  .logo { font-size: 15px; }
+  .lang-seg button { padding: 5px 7px; font-size: 11.5px; }
+  .nav .btn { padding: 8px 12px; font-size: 13px; }
 }
 </style>
 </head>
 <body>
-<!-- ============ 顶栏 ============ -->
-<nav class="nav">
-  <div class="nav-in">
-    <a class="brand" href="#top">
-      <span class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4"/><path d="M13 16h6"/></svg></span>
-      <span>Video Converter</span>
-    </a>
-    <div class="nav-links">
-      <a href="app/" data-i18n="navTool">转换</a>
-      <a href="#feat" data-i18n="navFeat">特性</a>
-      <a href="#download" data-i18n="navDl">下载</a>
-    </div>
-    <div class="nav-act">
-      <button class="iconbtn" id="btnTheme" title="外观 / Appearance" aria-label="切换外观">
-        <svg class="theme-ic theme-ic-auto" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v18"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
-        <svg class="theme-ic theme-ic-light" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.2 5.2l1.4 1.4M17.4 17.4l1.4 1.4M18.8 5.2l-1.4 1.4M6.6 17.4l-1.4 1.4"/></svg>
-        <svg class="theme-ic theme-ic-dark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a6.8 6.8 0 0 0 10.5 10.5z"/></svg>
-      </button>
-      <button class="langbtn" id="btnLang" title="Switch language / 切换语言">EN</button>
-    </div>
-  </div>
-</nav>
 
-<!-- ============ Hero ============ -->
-<a id="top"></a>
+<header>
+  <div class="wrap nav">
+    <div class="logo">
+      <span class="mark">VC</span>
+      <span>Video Converter<span class="sub" data-i18n="logo.sub">视频转换器</span></span>
+    </div>
+    <nav class="nav-links">
+      <a href="#features" data-i18n="nav.features">功能</a>
+      <a href="#how" data-i18n="nav.how">怎么用</a>
+      <a href="#truth" data-i18n="nav.truth">边界</a>
+      <a href="#mac" data-i18n="nav.mac">macOS 版</a>
+      <span class="lang-seg" id="langSeg">
+        <button type="button" data-lang-btn="zh">中文</button>
+        <button type="button" data-lang-btn="en">EN</button>
+        <button type="button" data-lang-btn="es">ES</button>
+      </span>
+    </nav>
+  </div>
+</header>
 <section class="hero">
   <div class="wrap">
-    <div class="hero-badge"><span class="dot"></span><span data-i18n="heroBadge">全程在本机运行，视频不会上传</span></div>
-    <h1 data-i18n="heroTitle">把视频，变简单。</h1>
-    <p class="lede" data-i18n="heroSub">B 站下载的 .m4s 自动配对合并成 MP4。原质量无损，不重新编码。</p>
-    <div class="hero-actions">
-      <a class="btn primary btn-lg" href="app/" data-i18n="ctaStart">开始使用</a>
-      <a class="btn btn-lg" href="#download" data-i18n="ctaDl">下载桌面版</a>
+    <div class="badge"><span class="dot"></span><span data-i18n="hero.badge">转换全程在本机完成 · 文件不上传 · 断网可用</span></div>
+    <h1 data-i18n-html="hero.h1">B 站下的视频，<span class="hl">合并成一个 MP4</span></h1>
+    <p class="lede" data-i18n="hero.lede">B 站客户端把视频和音频存成两个分开的 .m4s 文件，播放器打不开、剪辑软件也不认。把它们拖进来，自动按编号配对，合并成标准 MP4。只换封装格式，不重新编码 —— 画质和音质与你下载到的完全一致，速度以秒计。</p>
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="app/" data-i18n="hero.cta1">开始使用</a> →
+      <a class="btn btn-lg" href="#mac" data-i18n="hero.cta2">下载桌面版</a>
     </div>
-    <p class="hero-note" data-i18n="heroNote">无需注册 · 无需安装 · 打开即用</p>
+    <p class="cta-note" data-i18n="hero.note">网页版打开即用，第一次要下约 24 MB 的转换内核（之后浏览器缓存，拔网线也能用）。处理几 GB 的大文件建议用桌面版，它是流式处理的，不占内存。</p>
   </div>
 </section>
 
-
-<!-- ============ 特性 ============ -->
-<section class="sec" id="feat">
+<section id="features">
   <div class="wrap">
-    <div style="text-align:center">
-      <div class="eyebrow" data-i18n="featEyebrow">为什么用它</div>
-      <h2 data-i18n="featTitle">该快的地方快，该稳的地方稳。</h2>
+    <div class="sec-head">
+      <h2 data-i18n="feat.title">它解决的三个具体问题</h2>
+      <p data-i18n="feat.sub">不是又一个视频格式转换器。B 站下载下来的东西有它自己的脾气，这里针对的就是那三个地方。</p>
     </div>
-    <div class="feat-grid">
-      <div class="feat">
-        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg></div>
-        <h3 data-i18n="f1t">原质量无损</h3>
-        <p data-i18n="f1d">只更换封装格式，不重新编码。画质与音质和你下载到的完全一致，转换以秒计。</p>
+    <div class="grid grid-3">
+      <div class="card solve">
+        <div class="ico">⇄</div>
+        <h3 data-i18n="f1t">音视频自动配对</h3>
+        <p data-i18n-html="f1d">B 站的 <code>.m4s</code> 是音视频分离的，同一个视频会下出 <code>-1-30112.m4s</code> 和 <code>-1-30280.m4s</code> 两个文件。整个文件夹拖进来，按文件名里的编号自动认出哪两个是一对，不用你手动挑。</p>
       </div>
-      <div class="feat">
-        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="6" rx="2"/><rect x="3" y="14" width="18" height="6" rx="2"/><path d="M7 7h.01M7 17h.01"/></svg></div>
-        <h3 data-i18n="f2t">批量与自动配对</h3>
-        <p data-i18n="f2d">整个文件夹拖进来即可。音视频分离的 .m4s 会按编号自动配对，封面和标题一并读出。</p>
+      <div class="card solve">
+        <div class="ico">⚡</div>
+        <h3 data-i18n="f2t">不重新编码</h3>
+        <p data-i18n="f2d">只换容器，不重压。画质和音质与你下载到的完全一致，一秒钟的转码损失都没有。正因为不编码，速度才以秒计 —— 实测一段 546 秒、344 MB 的 1080p 视频，合并用时 1 秒。</p>
       </div>
-      <div class="feat">
-        <div class="fi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6.5v5c0 4.6 3.2 8.9 8 10 4.8-1.1 8-5.4 8-10v-5z"/><path d="m9 12 2 2 4-4"/></svg></div>
-        <h3 data-i18n="f3t">数据不出本机</h3>
-        <p data-i18n="f3d">转换全部在你的浏览器或本机应用中完成，文件不会上传到任何服务器。</p>
+      <div class="card solve">
+        <div class="ico">🔒</div>
+        <h3 data-i18n="f3t">文件不出本机</h3>
+        <p data-i18n="f3d">网页版的转换跑在你自己的浏览器里（WebAssembly），桌面版跑在本机原生 ffmpeg 上。两条路都不上传文件，断网也能用。这也是为什么它不需要注册、不需要账号。</p>
       </div>
     </div>
 
-    <div class="numbers">
-      <div class="n"><b>0</b><i data-i18n="n1">重新编码</i></div>
-      <div class="n"><b>∞</b><i data-i18n="n2">批量数量</i></div>
-      <div class="n"><b>0 B</b><i data-i18n="n3">上传流量</i></div>
-      <div class="n"><b>100%</b><i data-i18n="n4">本机处理</i></div>
+    <div class="numbers" style="margin-top:26px">
+      <div><b>0</b><span data-i18n="n1">次重新编码</span></div>
+      <div><b>1 s</b><span data-i18n="n2">合并 344 MB 视频</span></div>
+      <div><b>0 B</b><span data-i18n="n3">上传的流量</span></div>
+      <div><b>∞</b><span data-i18n="n4">同时拖入的文件数</span></div>
     </div>
   </div>
 </section>
 
-<!-- ============ 下载 ============ -->
-<section class="sec" id="download" style="padding-top:12px">
+<section id="how">
   <div class="wrap">
-    <div class="dl-card">
-      <div class="appicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 8 4 4-4 4"/><path d="M13 16h6"/></svg></div>
-      <h2 data-i18n="dlTitle">下载 macOS 应用</h2>
-      <p class="lede" data-i18n="dlSub">内置原生 ffmpeg，直接流式处理大文件。几 GB 的视频也不会遇到内存瓶颈。</p>
-      <div class="dl-actions">
-        <a class="btn primary btn-lg" id="btnDownload" href="https://github.com/KJHAJKSLFHA/bililyu/releases/latest">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-          <span data-i18n="dlBtn">下载 .dmg</span>
-        </a>
-        <a class="btn btn-lg" href="https://github.com/KJHAJKSLFHA/bililyu" data-i18n="dlSrc">查看源代码</a>
+    <div class="sec-head">
+      <h2 data-i18n="how.title">怎么用</h2>
+      <p data-i18n="how.sub">三步。没有注册，没有安装（网页版），没有水印。</p>
+    </div>
+    <div class="grid grid-3">
+      <div class="card">
+        <div class="ico">1</div>
+        <h3 data-i18n="s1t">找到下载的文件</h3>
+        <p data-i18n-html="s1d">B 站客户端下载的视频，一般在它的下载目录里，每个视频一个文件夹，里面躺着几个 <code>.m4s</code>。</p>
       </div>
-      <div class="dl-meta">
-        <span data-i18n="dlVer">版本 1.0.0</span>
-        <span data-i18n="dlSize">约 67 MB</span>
-        <span data-i18n="dlOS">macOS 13 及以上 · Apple 芯片</span>
+      <div class="card">
+        <div class="ico">2</div>
+        <h3 data-i18n="s2t">整个文件夹拖进来</h3>
+        <p data-i18n="s2d">不用挑文件，把那一整个文件夹拖进页面就行。它会自己配对、自己读出标题和封面，然后列出待转换的清单。</p>
       </div>
+      <div class="card">
+        <div class="ico">3</div>
+        <h3 data-i18n="s3t">点转换，拿 MP4</h3>
+        <p data-i18n="s3d">合并完直接存到你选的位置，文件名跟原视频同名。生成的是标准 MP4（H.264 + AAC），任何播放器和剪辑软件都认。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="truth">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 data-i18n="off.title">关于「免费」和「无损」，如实说明</h2>
+      <p data-i18n="off.sub">不想用「完全免费、完全无损」一句糊过去，边界说清楚比较好。</p>
+    </div>
+    <div class="grid grid-2">
+      <div class="card problem">
+        <div class="ico">!</div>
+        <h3 data-i18n="p1t">网页版有内存上限</h3>
+        <p data-i18n="p1d">网页版把整个文件读进浏览器内存来处理。所以几 GB 的视频（典型是 4K 或两小时以上的片子）在网页版里会失败 —— 这是浏览器架构的上限，不是没操作对。这种文件请用桌面版。</p>
+      </div>
+      <div class="card solve">
+        <div class="ico">✓</div>
+        <h3 data-i18n="p2t">桌面版没有这个限制</h3>
+        <p data-i18n="p2d">桌面版把 ffmpeg 编译进了应用，直接流式读写磁盘，不把文件整个装进内存。实测一个 7.42 GB 的文件，349 秒转完 —— 内存占用始终是几十 MB。</p>
+      </div>
+      <div class="card">
+        <div class="ico">◐</div>
+        <h3 data-i18n="p3t">只认 B 站的 m4s</h3>
+        <p data-i18n-html="p3d">它的输入是 B 站那套「-1-30112 / -1-30280」的命名。<code>.mp4</code>、<code>.mkv</code> 这些常见格式本身就不需要合并，拖进来是没有意义的。要转别的格式，用别的工具更合适。</p>
+      </div>
+      <div class="card">
+        <div class="ico">↻</div>
+        <h3 data-i18n="p4t">不处理加密和会员内容</h3>
+        <p data-i18n="p4d">它只做重封装这一件事，不破解、不解密、不绕过任何限制。你得先有能正常下载下来的文件，它才有东西可合并。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="mac">
+  <div class="wrap">
+    <div class="sec-head">
+      <h2 data-i18n="mac.title">打包成 macOS 应用</h2>
+      <p data-i18n="mac.sub">网页版受内存限制，桌面版是为大文件准备的。内置换成原生 ffmpeg，其余界面一模一样。</p>
+    </div>
+    <div class="dl">
+      <div class="row">
+        <div class="ico-lg">&gt;_</div>
+        <div class="meta">
+          <h3 data-i18n="dl.title">Video Converter for macOS</h3>
+          <p data-i18n="dl.sub">原生 ffmpeg 流式处理。7.42 GB 的文件 349 秒转完，内存占用保持几十 MB。</p>
+        </div>
+        <div class="acts">
+          <a class="btn btn-primary btn-lg" id="btnDownload" href="https://github.com/KJHAJKSLFHA/bililyu/releases/latest" data-i18n="dl.btn">下载 .dmg</a>
+          <a class="btn btn-lg" href="https://github.com/KJHAJKSLFHA/bililyu" data-i18n="dl.src">查看源代码</a>
+        </div>
+      </div>
+      <p class="facts" data-i18n="dl.facts">版本 1.0.0 · 约 67 MB · macOS 13 及以上 · Apple 芯片 · 开源</p>
 
       <details class="gate">
-        <summary data-i18n="gateSum">首次打开时提示“无法验证开发者”怎么办</summary>
-        <div class="gate-body">
-          <p data-i18n="gateIntro">这个应用没有经过 Apple 公证，所以 macOS 首次打开时会拦一次。只需放行一次，之后正常双击即可。</p>
-          <ol>
-            <li data-i18n-html="gateS1">在「访达」中<strong>右键点按</strong>应用图标，选择「打开」</li>
-            <li data-i18n-html="gateS2">在弹出的对话框中再次点「打开」</li>
-            <li data-i18n-html="gateS3">如果仍然被拦：打开<strong>系统设置 → 隐私与安全性</strong>，在下方找到该应用并点「仍要打开」</li>
-          </ol>
-        </div>
+        <summary data-i18n="gate.sum">首次打开时提示「无法验证开发者」怎么办</summary>
+        <ol>
+          <li data-i18n="gate.s1">这个应用没有买 Apple 的开发者签名（个人项目，一年 99 美元），所以系统会拦一下。文件本身是完整的，不是坏了。</li>
+          <li data-i18n="gate.s2">在「访达」里右键点这个应用 → 选「打开」→ 在弹窗里再点一次「打开」。只需要做这一次，之后双击就能开。</li>
+          <li data-i18n="gate.s3">如果右键打开还是被拦，去「系统设置 → 隐私与安全性」，在下面找到刚被拦住的提示，点「仍要打开」。</li>
+        </ol>
       </details>
     </div>
   </div>
 </section>
 
-<!-- ============ 页脚 ============ -->
 <footer>
   <div class="wrap">
-    <div class="foot-in">
-      <span data-i18n="footCopy">Video Converter · 把 B 站视频变简单</span>
-      <div class="foot-links">
-        <a href="https://github.com/KJHAJKSLFHA/bililyu" target="_blank" rel="noopener">GitHub</a>
-        <a href="https://github.com/KJHAJKSLFHA/bililyu/releases" target="_blank" rel="noopener" data-i18n="footRel">发布记录</a>
-        <a href="app/" data-i18n="footTop">回到转换</a>
-      </div>
-    </div>
+    <span data-i18n="foot.copy">Video Converter · 把 B 站视频变简单</span>
+    <span style="margin-left:auto;display:flex;gap:20px;flex-wrap:wrap">
+      <a href="https://github.com/KJHAJKSLFHA/bililyu" data-i18n="foot.src">GitHub</a>
+      <a href="https://github.com/KJHAJKSLFHA/bililyu/releases" data-i18n="foot.rel">发布记录</a>
+      <a href="app/" data-i18n="foot.app">打开转换页</a>
+    </span>
   </div>
 </footer>
-
-
-
 <script>
 "use strict";
-const $ = s => document.querySelector(s);
 
-/* ---------------- 国际化（中 / 英） ---------------- */
+/* ---------------- 多语字典（中文 / English / Español） ----------------
+   三份的 key 必须完全一致。改完用 tools/check-vc-i18n.mjs 校验。
+   文案风格：具体、给数字、承认边界，不写「完美」「极致」这类空话。 */
 const I18N = {
   zh: {
-    title:'Video Converter · B站视频转换器',
-    desc:'浏览器里运行的视频转换器：导入 B 站 m4s 自动合并音视频，原质量无损转换，支持批量转换与自选输出文件夹。',
-    langSwitch:'EN',
-    pickFiles:'选择视频文件',
-    pickDir:'选择视频文件夹',
-    stTotal:'个视频', stDone:'已转换', stPending:'待转换', stSize:'总大小',
-    searchPh:'搜索标题 / UP主 / BV号…',
-    tabAll:'全部', tabPending:'待转换', tabDone:'已转换',
-    sortTitle:'按标题', sortSize:'按大小', sortDuration:'按时长',
-    clearList:'清空列表',
-    outLabel:'输出文件夹',
-    outUnset:'未选择（将下载到浏览器默认下载位置）',
-    outSet:'『{name}』文件夹',
-    chooseFolder:'选择文件夹', clear:'清除',
-    delOriginals:'转换后删除原文件',
-    qualityNote:'画质：原质量无损（只换封装，不重新编码）',
-    dropTitle:'把视频或整个文件夹拖到这里',
-    dropSub:'B 站下载的 .m4s（音视频分离）会自动配对合并，并读取同目录的封面与标题<br>也支持 mp4 / mkv / flv / ts / webm 等 · 全程在本机浏览器中完成，视频不会上传',
-    selAll:'全选', selNone:'取消选择', removeSel:'移除选中',
-    selPre:'已选 ', selPost:' 个',
-    cancelAll:'批量取消转换',
-    convertAllPending:'转换全部待转换 ({n})', allConverted:'全部已转换',
-    convertSel:'转换选中',
-    jobs:'任务进度', tasks:'转换任务', collapse:'收起', noTasks:'暂无任务',
-    ovTitle:'正在加载转换引擎…',
-    ovSub:'首次使用需要下载约 24MB 的转换内核，之后会缓存',
-    unknownUp:'未知UP主', noCover:'无封面',
-    kindDash:'音视频分离', kindSingle:'单文件',
-    badgeDone:'已转换', badgeError:'失败', badgeCanceled:'已取消', badgeQueued:'排队中',
-    jobDone:'完成', jobError:'失败', jobCanceled:'已取消', jobWaiting:'等待',
-    toastNoVideo:'没有识别到可导入的视频',
-    toastImported:'已导入 {n} 个视频',
-    toastSkipped:'，跳过 {n} 个不完整文件',
-    toastRunning:'该视频正在转换中',
-    toastSelectFirst:'先选中要移除的视频',
-    toastCancelRunningFirst:'请先取消正在进行的转换',
-    toastListEmpty:'列表已是空的',
-    confirmClearList:'确定清空整个列表吗？（不会删除你的原文件）',
-    toastCannotRemoveRunning:'正在转换中的任务无法移除',
-    toastNoPicker:'当前浏览器不支持选择文件夹，转换后将自动下载到「下载」文件夹',
-    toastNoPerm:'未获得写入权限',
-    toastOutSet:'输出文件夹已设为：{name}',
-    toastOutFail:'选择文件夹失败：{msg}',
-    toastDelUnsupported:'当前导入方式不支持删除原文件（需用「选择视频文件夹」导入）',
-    warnDel:'⚠️ 已开启「转换后删除原文件」：转换成功后会永久删除对应的原始文件，请确认你不再需要它们。转换失败的视频不会删除原文件。',
-    toastBusy:'已有转换任务正在进行',
-    toastNoPending:'没有待转换的视频',
-    toastEngineFail:'转换引擎加载失败：{msg}（请检查网络后重试）',
-    msgCanceled:'已取消',
-    toastDone:'转换完成：成功 {n} 个',
-    toastAllCanceled:'已取消全部转换任务',
-    toastNothingCancel:'没有正在进行的或排队中的任务',
-    confirmCancelAll:'确定取消全部转换吗？正在转换的视频会被中断，已完成的会保留。',
-    errTooLarge:'文件过大，浏览器内存不足',
-    errEmptyOutput:'转换输出为空',
-    errEngineNotLoaded:'转换引擎脚本未加载',
-    qnDolby:'杜比',
+    'logo.sub': '视频转换器',
+    'title': 'Video Converter · B 站视频转换器',
+    'desc': '把 B 站下载的音视频分离 .m4s 合并成 MP4。只换封装不重新编码，画质不变，全程在本机完成。',
 
-    /* --- 官网（新首页）--- */
-    navTool:'转换', navFeat:'特性', navDl:'下载',
-    heroBadge:'全程在本机运行，视频不会上传',
-    heroTitle:'把视频，变简单。',
-    heroSub:'B 站下载的 .m4s 自动配对合并成 MP4。原质量无损，不重新编码。',
-    ctaStart:'开始使用', ctaDl:'下载桌面版',
-    heroNote:'无需注册 · 无需安装 · 打开即用',
-    featEyebrow:'为什么用它',
-    featTitle:'该快的地方快，该稳的地方稳。',
-    f1t:'原质量无损',
-    f1d:'只更换封装格式，不重新编码。画质与音质和你下载到的完全一致，转换以秒计。',
-    f2t:'批量与自动配对',
-    f2d:'整个文件夹拖进来即可。音视频分离的 .m4s 会按编号自动配对，封面和标题一并读出。',
-    f3t:'数据不出本机',
-    f3d:'转换全部在你的浏览器或本机应用中完成，文件不会上传到任何服务器。',
-    n1:'重新编码', n2:'批量数量', n3:'上传流量', n4:'本机处理',
-    dlTitle:'下载 macOS 应用',
-    dlSub:'内置原生 ffmpeg，直接流式处理大文件。几 GB 的视频也不会遇到内存瓶颈。',
-    dlBtn:'下载 .dmg', dlSrc:'查看源代码',
-    dlVer:'版本 1.0.0', dlSize:'约 67 MB', dlOS:'macOS 13 及以上 · Apple 芯片',
-    gateSum:'首次打开时提示“无法验证开发者”怎么办',
-    gateIntro:'这个应用没有经过 Apple 公证，所以 macOS 首次打开时会拦一次。只需放行一次，之后正常双击即可。',
-    gateS1:'在「访达」中<strong>右键点按</strong>应用图标，选择「打开」',
-    gateS2:'在弹出的对话框中再次点「打开」',
-    gateS3:'如果仍然被拦：打开<strong>系统设置 → 隐私与安全性</strong>，在下方找到该应用并点「仍要打开」',
-    footCopy:'Video Converter · 把 B 站视频变简单',
-    footRel:'发布记录', footTop:'回到转换'
+    'nav.features': '功能',
+    'nav.how': '怎么用',
+    'nav.truth': '边界',
+    'nav.mac': 'macOS 版',
+
+    'hero.badge': '转换全程在本机完成 · 文件不上传 · 断网可用',
+    'hero.h1': 'B 站下的视频，<span class="hl">合并成一个 MP4</span>',
+    'hero.lede': 'B 站客户端把视频和音频存成两个分开的 .m4s 文件，播放器打不开、剪辑软件也不认。把它们拖进来，自动按编号配对，合并成标准 MP4。只换封装格式，不重新编码 —— 画质和音质与你下载到的完全一致，速度以秒计。',
+    'hero.cta1': '开始使用',
+    'hero.cta2': '下载桌面版',
+    'hero.note': '网页版打开即用，第一次要下约 24 MB 的转换内核（之后浏览器缓存，拔网线也能用）。处理几 GB 的大文件建议用桌面版，它是流式处理的，不占内存。',
+
+    'feat.title': '它解决的三个具体问题',
+    'feat.sub': '不是又一个视频格式转换器。B 站下载下来的东西有它自己的脾气，这里针对的就是那三个地方。',
+    'f1t': '音视频自动配对',
+    'f1d': 'B 站的 <code>.m4s</code> 是音视频分离的，同一个视频会下出 <code>-1-30112.m4s</code> 和 <code>-1-30280.m4s</code> 两个文件。整个文件夹拖进来，按文件名里的编号自动认出哪两个是一对，不用你手动挑。',
+    'f2t': '不重新编码',
+    'f2d': '只换容器，不重压。画质和音质与你下载到的完全一致，一秒钟的转码损失都没有。正因为不编码，速度才以秒计 —— 实测一段 546 秒、344 MB 的 1080p 视频，合并用时 1 秒。',
+    'f3t': '文件不出本机',
+    'f3d': '网页版的转换跑在你自己的浏览器里（WebAssembly），桌面版跑在本机原生 ffmpeg 上。两条路都不上传文件，断网也能用。这也是为什么它不需要注册、不需要账号。',
+    'n1': '次重新编码',
+    'n2': '合并 344 MB 视频',
+    'n3': '上传的流量',
+    'n4': '同时拖入的文件数',
+
+    'how.title': '怎么用',
+    'how.sub': '三步。没有注册，没有安装（网页版），没有水印。',
+    's1t': '找到下载的文件',
+    's1d': 'B 站客户端下载的视频，一般在它的下载目录里，每个视频一个文件夹，里面躺着几个 <code>.m4s</code>。',
+    's2t': '整个文件夹拖进来',
+    's2d': '不用挑文件，把那一整个文件夹拖进页面就行。它会自己配对、自己读出标题和封面，然后列出待转换的清单。',
+    's3t': '点转换，拿 MP4',
+    's3d': '合并完直接存到你选的位置，文件名跟原视频同名。生成的是标准 MP4（H.264 + AAC），任何播放器和剪辑软件都认。',
+
+    'off.title': '关于「免费」和「无损」，如实说明',
+    'off.sub': '不想用「完全免费、完全无损」一句糊过去，边界说清楚比较好。',
+    'p1t': '网页版有内存上限',
+    'p1d': '网页版把整个文件读进浏览器内存来处理。所以几 GB 的视频（典型是 4K 或两小时以上的片子）在网页版里会失败 —— 这是浏览器架构的上限，不是没操作对。这种文件请用桌面版。',
+    'p2t': '桌面版没有这个限制',
+    'p2d': '桌面版把 ffmpeg 编译进了应用，直接流式读写磁盘，不把文件整个装进内存。实测一个 7.42 GB 的文件，349 秒转完 —— 内存占用始终是几十 MB。',
+    'p3t': '只认 B 站的 m4s',
+    'p3d': '它的输入是 B 站那套「-1-30112 / -1-30280」的命名。<code>.mp4</code>、<code>.mkv</code> 这些常见格式本身就不需要合并，拖进来是没有意义的。要转别的格式，用别的工具更合适。',
+    'p4t': '不处理加密和会员内容',
+    'p4d': '它只做重封装这一件事，不破解、不解密、不绕过任何限制。你得先有能正常下载下来的文件，它才有东西可合并。',
+
+    'mac.title': '打包成 macOS 应用',
+    'mac.sub': '网页版受内存限制，桌面版是为大文件准备的。内置换成原生 ffmpeg，其余界面一模一样。',
+    'dl.title': 'Video Converter for macOS',
+    'dl.sub': '原生 ffmpeg 流式处理。7.42 GB 的文件 349 秒转完，内存占用保持几十 MB。',
+    'dl.btn': '下载 .dmg',
+    'dl.src': '查看源代码',
+    'dl.facts': '版本 1.0.0 · 约 67 MB · macOS 13 及以上 · Apple 芯片 · 开源',
+    'gate.sum': '首次打开时提示「无法验证开发者」怎么办',
+    'gate.s1': '这个应用没有买 Apple 的开发者签名（个人项目，一年 99 美元），所以系统会拦一下。文件本身是完整的，不是坏了。',
+    'gate.s2': '在「访达」里右键点这个应用 → 选「打开」→ 在弹窗里再点一次「打开」。只需要做这一次，之后双击就能开。',
+    'gate.s3': '如果右键打开还是被拦，去「系统设置 → 隐私与安全性」，在下面找到刚被拦住的提示，点「仍要打开」。',
+
+    'foot.copy': 'Video Converter · 把 B 站视频变简单',
+    'foot.src': 'GitHub',
+    'foot.rel': '发布记录',
+    'foot.app': '打开转换页'
   },
-  en: {
-    title:'Video Converter · Bilibili Video Converter',
-    desc:'A video converter that runs entirely in your browser: import Bilibili .m4s files to auto-merge video and audio with zero quality loss. Batch conversion and a custom output folder are supported.',
-    langSwitch:'中文',
-    pickFiles:'Choose Video Files',
-    pickDir:'Choose Folder',
-    stTotal:'Videos', stDone:'Converted', stPending:'Pending', stSize:'Total size',
-    searchPh:'Search title / uploader / BV id…',
-    tabAll:'All', tabPending:'Pending', tabDone:'Converted',
-    sortTitle:'By title', sortSize:'By size', sortDuration:'By duration',
-    clearList:'Clear list',
-    outLabel:'Output folder',
-    outUnset:'Not set (files will go to your browser’s default download folder)',
-    outSet:'Folder “{name}”',
-    chooseFolder:'Choose folder', clear:'Clear',
-    delOriginals:'Delete source files after conversion',
-    qualityNote:'Quality: lossless (remux only, no re-encoding)',
-    dropTitle:'Drop videos or a whole folder here',
-    dropSub:'Bilibili .m4s files (separate video/audio streams) are auto-paired and merged, and the cover plus title are read from the same folder<br>Also supports mp4 / mkv / flv / ts / webm · Everything runs locally in your browser — nothing is uploaded',
-    selAll:'Select all', selNone:'Deselect', removeSel:'Remove selected',
-    selPre:'Selected ', selPost:'',
-    cancelAll:'Cancel all',
-    convertAllPending:'Convert all pending ({n})', allConverted:'All converted',
-    convertSel:'Convert selected',
-    jobs:'Progress', tasks:'Conversion tasks', collapse:'Hide', noTasks:'No tasks yet',
-    ovTitle:'Loading conversion engine…',
-    ovSub:'The first run downloads a ~24 MB engine core; it is cached afterwards',
-    unknownUp:'Unknown uploader', noCover:'No cover',
-    kindDash:'Video + audio', kindSingle:'Single file',
-    badgeDone:'Converted', badgeError:'Failed', badgeCanceled:'Canceled', badgeQueued:'Queued',
-    jobDone:'Done', jobError:'Failed', jobCanceled:'Canceled', jobWaiting:'Waiting',
-    toastNoVideo:'No importable video found',
-    toastImported:'Imported {n} video(s)',
-    toastSkipped:', skipped {n} incomplete file(s)',
-    toastRunning:'This video is being converted',
-    toastSelectFirst:'Select the videos to remove first',
-    toastCancelRunningFirst:'Cancel the running conversion first',
-    toastListEmpty:'The list is already empty',
-    confirmClearList:'Clear the whole list? (Your source files will not be deleted.)',
-    toastCannotRemoveRunning:'Running tasks cannot be removed',
-    toastNoPicker:'This browser cannot pick a folder; converted files will be downloaded to your Downloads folder',
-    toastNoPerm:'Write permission was not granted',
-    toastOutSet:'Output folder set to: {name}',
-    toastOutFail:'Failed to choose a folder: {msg}',
-    toastDelUnsupported:'Deleting source files requires importing via “Choose Folder”',
-    warnDel:'⚠️ “Delete source files after conversion” is on: after a successful conversion the original files are permanently deleted. Make sure you no longer need them. Files from failed conversions are kept.',
-    toastBusy:'A conversion task is already running',
-    toastNoPending:'No pending videos',
-    toastEngineFail:'Failed to load the conversion engine: {msg} (check your network and try again)',
-    msgCanceled:'Canceled',
-    toastDone:'Conversion finished: {n} succeeded',
-    toastAllCanceled:'All conversion tasks canceled',
-    toastNothingCancel:'No running or queued tasks',
-    confirmCancelAll:'Cancel all conversions? The video being converted will be interrupted; finished ones are kept.',
-    errTooLarge:'File is too large for browser memory',
-    errEmptyOutput:'Conversion produced an empty output',
-    errEngineNotLoaded:'Conversion engine script was not loaded',
-    qnDolby:'Dolby',
 
-    /* --- Site (new landing page) --- */
-    navTool:'Convert', navFeat:'Features', navDl:'Download',
-    heroBadge:'Runs entirely on your device. Nothing is uploaded.',
-    heroTitle:'Video, made simple.',
-    heroSub:'Bilibili .m4s files pair up and merge into MP4 automatically. Lossless — no re-encoding.',
-    ctaStart:'Get started', ctaDl:'Download desktop app',
-    heroNote:'No sign-up · No install · Works instantly',
-    featEyebrow:'Why use it',
-    featTitle:'Fast where it counts. Solid where it matters.',
-    f1t:'Lossless by design',
-    f1d:'The container is remuxed, never re-encoded. Picture and sound stay bit-for-bit what you downloaded, and conversion takes seconds.',
-    f2t:'Batch and auto-pairing',
-    f2d:'Drop in a whole folder. Split audio and video .m4s files are matched by number, with covers and titles read alongside.',
-    f3t:'Your files stay yours',
-    f3d:'Everything happens in your browser or on your Mac. No file is ever uploaded to a server.',
-    n1:'re-encoding', n2:'batch size', n3:'upload traffic', n4:'on-device',
-    dlTitle:'Download for macOS',
-    dlSub:'Native ffmpeg built in, streaming large files directly. Multi-gigabyte videos without the memory wall.',
-    dlBtn:'Download .dmg', dlSrc:'View source',
-    dlVer:'Version 1.0.0', dlSize:'About 67 MB', dlOS:'macOS 13 or later · Apple silicon',
-    gateSum:'What if macOS says the developer cannot be verified?',
-    gateIntro:'This app is not notarized by Apple, so macOS will block it once on first launch. Allow it once and it opens normally afterwards.',
-    gateS1:'In Finder, <strong>right-click</strong> the app icon and choose “Open”',
-    gateS2:'Click “Open” again in the dialog that appears',
-    gateS3:'Still blocked? Open <strong>System Settings → Privacy &amp; Security</strong>, find the app below and click “Open Anyway”',
-    footCopy:'Video Converter · Bilibili videos, made simple',
-    footRel:'Releases', footTop:'Back to converter'
+  en: {
+    'logo.sub': 'Video Converter',
+    'title': 'Video Converter · Merge Bilibili downloads',
+    'desc': 'Merge Bilibili\u2019s split audio/video .m4s files into a single MP4. Container remux only, no re-encoding, everything on your own machine.',
+
+    'nav.features': 'Features',
+    'nav.how': 'How it works',
+    'nav.truth': 'Limits',
+    'nav.mac': 'macOS app',
+
+    'hero.badge': 'Runs entirely on your machine · Files never uploaded · Works offline',
+    'hero.h1': 'Bilibili downloads, <span class="hl">merged into one MP4</span>',
+    'hero.lede': 'The Bilibili client saves video and audio as two separate .m4s files, which players refuse to open and editors refuse to import. Drop them in and they are matched by their filenames and remuxed into a standard MP4. The container is rewritten, nothing is re-encoded \u2014 quality is bit-for-bit what you downloaded, and it finishes in seconds.',
+    'hero.cta1': 'Open the tool',
+    'hero.cta2': 'Get the desktop app',
+    'hero.note': 'The web version works instantly, but downloads a ~24 MB remux engine on first use (cached by your browser afterwards, so it keeps working offline). For multi-gigabyte files use the desktop app \u2014 it streams from disk instead of loading everything into memory.',
+
+    'feat.title': 'Three specific problems it solves',
+    'feat.sub': 'Not another video converter. Bilibili downloads have quirks of their own, and these are the three that matter.',
+    'f1t': 'Audio and video matched automatically',
+    'f1d': 'Bilibili splits tracks: one video produces <code>-1-30112.m4s</code> and <code>-1-30280.m4s</code>. Drop the whole folder in and it pairs them by the number in the filename \u2014 no picking files by hand.',
+    'f2t': 'No re-encoding',
+    'f2d': 'The container is rewritten, the streams are not. Quality is identical to what you downloaded, with zero generational loss. Skipping the encode is also why it is fast \u2014 a 546-second, 344 MB 1080p video remuxed in 1 second in testing.',
+    'f3t': 'Nothing leaves your machine',
+    'f3d': 'The web version runs in your own browser via WebAssembly; the desktop version runs a native ffmpeg build locally. Neither uploads your files, and both work with the network unplugged. That is also why there is no sign-up and no account.',
+    'n1': 're-encodes',
+    'n2': 'for a 344 MB video',
+    'n3': 'uploaded',
+    'n4': 'files at once',
+
+    'how.title': 'How to use it',
+    'how.sub': 'Three steps. No account, no install (web version), no watermark.',
+    's1t': 'Find the downloaded files',
+    's1d': 'Videos downloaded by the Bilibili client live in its download folder, one folder per video, each containing a few <code>.m4s</code> files.',
+    's2t': 'Drop the whole folder in',
+    's2d': 'No need to sort files \u2014 just drop the folder onto the page. It pairs the tracks, reads the title and cover art, and lists what is ready to convert.',
+    's3t': 'Convert and get your MP4',
+    's3d': 'The result is saved wherever you choose, named after the original video. It is a standard MP4 (H.264 + AAC) that any player or editor will open.',
+
+    'off.title': 'On "free" and "lossless", honestly',
+    'off.sub': 'Rather than wave "completely free, completely lossless" at you, here are the actual boundaries.',
+    'p1t': 'The web version has a memory ceiling',
+    'p1d': 'The web version reads the whole file into browser memory. Multi-gigabyte videos \u2014 typically 4K or anything over two hours \u2014 will fail there. That is a browser architecture limit, not a mistake in how you used it. Use the desktop app for those.',
+    'p2t': 'The desktop app has no such limit',
+    'p2d': 'It compiles ffmpeg into the app and streams straight to and from disk instead of holding the file in memory. A 7.42 GB file converted in 349 seconds in testing, with memory never leaving the tens of megabytes.',
+    'p3t': 'It only understands Bilibili\u2019s m4s',
+    'p3d': 'Its input is Bilibili\u2019s "-1-30112 / -1-30280" naming. Common formats like <code>.mp4</code> and <code>.mkv</code> need no merging in the first place, so dropping them in achieves nothing. For real format conversion, another tool will serve you better.',
+    'p4t': 'No DRM, no member-only content',
+    'p4d': 'It does exactly one thing: remuxing. It does not decrypt, crack, or bypass anything. You need files you can already download normally before it has anything to merge.',
+
+    'mac.title': 'Packaged as a macOS app',
+    'mac.sub': 'The web version is memory-bound; the desktop app exists for large files. Native ffmpeg inside, identical interface otherwise.',
+    'dl.title': 'Video Converter for macOS',
+    'dl.sub': 'Streaming native ffmpeg. A 7.42 GB file in 349 seconds, memory staying in the tens of megabytes.',
+    'dl.btn': 'Download .dmg',
+    'dl.src': 'View source',
+    'dl.facts': 'Version 1.0.0 · ~67 MB · macOS 13 or later · Apple silicon · Open source',
+    'gate.sum': 'What to do if macOS says "cannot verify the developer"',
+    'gate.s1': 'The app is not signed with a paid Apple developer certificate (this is a personal project, and that costs $99 a year), so macOS blocks it once. The file itself is intact \u2014 nothing is broken.',
+    'gate.s2': 'In Finder, right-click the app \u2192 choose "Open" \u2192 click "Open" again in the dialog. You only need to do this once; afterwards it opens with a normal double-click.',
+    'gate.s3': 'If it is still blocked, go to System Settings \u2192 Privacy & Security, find the message about the blocked app, and click "Open Anyway".',
+
+    'foot.copy': 'Video Converter · Bilibili downloads, made simple',
+    'foot.src': 'GitHub',
+    'foot.rel': 'Releases',
+    'foot.app': 'Open the converter'
+  },
+
+  es: {
+    'logo.sub': 'Conversor de vídeo',
+    'title': 'Video Converter · Une las descargas de Bilibili',
+    'desc': 'Une los archivos .m4s de audio y vídeo separados de Bilibili en un solo MP4. Solo se cambia el contenedor, sin recodificar, todo en tu equipo.',
+
+    'nav.features': 'Funciones',
+    'nav.how': 'Cómo se usa',
+    'nav.truth': 'Límites',
+    'nav.mac': 'App para macOS',
+
+    'hero.badge': 'Todo ocurre en tu equipo · Los archivos no se suben · Funciona sin conexión',
+    'hero.h1': 'Las descargas de Bilibili, <span class="hl">unidas en un solo MP4</span>',
+    'hero.lede': 'El cliente de Bilibili guarda el vídeo y el audio en dos archivos .m4s separados, que los reproductores no abren y los editores no importan. Arrástralos aquí y se emparejan por el nombre del archivo y se unen en un MP4 estándar. Solo se reescribe el contenedor, no se recodifica nada: la calidad es idéntica a la que descargaste y termina en segundos.',
+    'hero.cta1': 'Abrir la herramienta',
+    'hero.cta2': 'Descargar la app',
+    'hero.note': 'La versión web funciona al instante, pero la primera vez descarga un motor de unos 24 MB (después el navegador lo guarda en caché, así que sigue funcionando sin conexión). Para archivos de varios GB usa la app de escritorio: procesa en streaming en lugar de cargar todo en memoria.',
+
+    'feat.title': 'Tres problemas concretos que resuelve',
+    'feat.sub': 'No es otro conversor de vídeo. Las descargas de Bilibili tienen sus propias manías, y estos son los tres puntos que importan.',
+    'f1t': 'Audio y vídeo emparejados solos',
+    'f1d': 'Bilibili separa las pistas: un vídeo genera <code>-1-30112.m4s</code> y <code>-1-30280.m4s</code>. Arrastra la carpeta entera y los empareja por el número del nombre del archivo, sin que tengas que elegir nada a mano.',
+    'f2t': 'Sin recodificar',
+    'f2d': 'Se reescribe el contenedor, no los flujos. La calidad es idéntica a la que descargaste, sin pérdida por generaciones. Saltarse la codificación es también la razón de su velocidad: un vídeo 1080p de 546 segundos y 344 MB se unió en 1 segundo en las pruebas.',
+    'f3t': 'Nada sale de tu equipo',
+    'f3d': 'La versión web se ejecuta en tu propio navegador mediante WebAssembly; la de escritorio usa una compilación nativa de ffmpeg en local. Ninguna sube tus archivos y ambas funcionan con la red desconectada. Por eso tampoco hay registro ni cuenta.',
+    'n1': 'recodificaciones',
+    'n2': 'para un vídeo de 344 MB',
+    'n3': 'subidos',
+    'n4': 'archivos a la vez',
+
+    'how.title': 'Cómo se usa',
+    'how.sub': 'Tres pasos. Sin cuenta, sin instalación (versión web), sin marca de agua.',
+    's1t': 'Encuentra los archivos descargados',
+    's1d': 'Los vídeos que descarga el cliente de Bilibili están en su carpeta de descargas, una carpeta por vídeo, cada una con varios archivos <code>.m4s</code>.',
+    's2t': 'Arrastra la carpeta entera',
+    's2d': 'No hace falta ordenar archivos: arrastra la carpeta a la página. Empareja las pistas, lee el título y la portada, y muestra la lista de lo que se puede convertir.',
+    's3t': 'Convierte y obtén tu MP4',
+    's3d': 'El resultado se guarda donde elijas, con el nombre del vídeo original. Es un MP4 estándar (H.264 + AAC) que abre cualquier reproductor o editor.',
+
+    'off.title': 'Sobre «gratis» y «sin pérdida», con honestidad',
+    'off.sub': 'En lugar de soltarte un «totalmente gratis y sin pérdida», aquí están los límites reales.',
+    'p1t': 'La versión web tiene un techo de memoria',
+    'p1d': 'La versión web lee el archivo completo en la memoria del navegador. Los vídeos de varios GB —normalmente 4K o de más de dos horas— fallarán ahí. Es un límite de la arquitectura del navegador, no un error de uso. Para esos casos, usa la app de escritorio.',
+    'p2t': 'La app de escritorio no tiene ese límite',
+    'p2d': 'Compila ffmpeg dentro de la aplicación y lee y escribe directamente en disco en streaming, sin mantener el archivo en memoria. Un archivo de 7,42 GB se convirtió en 349 segundos en las pruebas, con la memoria sin salir de las decenas de MB.',
+    'p3t': 'Solo entiende los m4s de Bilibili',
+    'p3d': 'Su entrada es el nombrado «-1-30112 / -1-30280» de Bilibili. Formatos habituales como <code>.mp4</code> o <code>.mkv</code> no necesitan unión alguna, así que arrastrarlos no aporta nada. Para convertir formatos de verdad, otra herramienta te servirá mejor.',
+    'p4t': 'Sin DRM ni contenido de suscripción',
+    'p4d': 'Hace exactamente una cosa: reempaquetar. No descifra, no rompe ni evade nada. Necesitas archivos que ya puedas descargar con normalidad para que tenga algo que unir.',
+
+    'mac.title': 'Empaquetado como app para macOS',
+    'mac.sub': 'La versión web está limitada por la memoria; la de escritorio existe para archivos grandes. Dentro lleva ffmpeg nativo; por lo demás, la interfaz es idéntica.',
+    'dl.title': 'Video Converter para macOS',
+    'dl.sub': 'ffmpeg nativo en streaming. Un archivo de 7,42 GB en 349 segundos, con la memoria en decenas de MB.',
+    'dl.btn': 'Descargar .dmg',
+    'dl.src': 'Ver el código',
+    'dl.facts': 'Versión 1.0.0 · ~67 MB · macOS 13 o posterior · Apple silicon · Código abierto',
+    'gate.sum': 'Qué hacer si macOS dice «no se puede verificar el desarrollador»',
+    'gate.s1': 'La app no está firmada con un certificado de desarrollador de Apple de pago (es un proyecto personal, y cuesta 99 dólares al año), así que macOS la bloquea una vez. El archivo está intacto: no hay nada roto.',
+    'gate.s2': 'En el Finder, haz clic derecho en la app → «Abrir» → vuelve a pulsar «Abrir» en el diálogo. Solo hace falta hacerlo una vez; después se abre con doble clic normal.',
+    'gate.s3': 'Si sigue bloqueada, ve a Ajustes del Sistema → Privacidad y seguridad, busca el aviso sobre la app bloqueada y pulsa «Abrir igualmente».',
+
+    'foot.copy': 'Video Converter · Las descargas de Bilibili, sin complicaciones',
+    'foot.src': 'GitHub',
+    'foot.rel': 'Versiones',
+    'foot.app': 'Abrir el conversor'
   }
 };
+
+/* ---------------- 语言 ---------------- */
+const LANGS = ['zh','en','es'];
 const LANG_KEY = 'vc2_lang';
 let lang = (()=>{
-  try{ const saved = localStorage.getItem(LANG_KEY); if(saved==='zh'||saved==='en') return saved; }catch(_){}
-  return /^zh/i.test(navigator.language || '') ? 'zh' : 'en';
+  try{ const s = localStorage.getItem(LANG_KEY); if(LANGS.indexOf(s) >= 0) return s; }catch(_){}
+  const n = (navigator.language || 'en').toLowerCase();
+  if(n.indexOf('zh') === 0) return 'zh';
+  if(n.indexOf('es') === 0) return 'es';
+  return 'en';
 })();
+const HTML_LANG = { zh:'zh-CN', en:'en', es:'es' };
 function t(k, p){
   const d = I18N[lang] || I18N.zh;
   let s = (k in d) ? d[k] : (I18N.zh[k] !== undefined ? I18N.zh[k] : k);
@@ -810,81 +564,28 @@ function t(k, p){
   return s;
 }
 function setLang(l, save){
-  lang = (l==='en') ? 'en' : 'zh';
+  lang = LANGS.indexOf(l) >= 0 ? l : 'en';
   if(save){ try{ localStorage.setItem(LANG_KEY, lang); }catch(_){} }
   applyI18n();
 }
 function applyI18n(){
-  document.documentElement.lang = lang==='en' ? 'en' : 'zh-CN';
+  const root = document.documentElement;
+  root.lang = HTML_LANG[lang];
+  root.setAttribute('data-lang', lang);
   document.title = t('title');
   const md = document.querySelector('meta[name="description"]'); if(md) md.setAttribute('content', t('desc'));
   document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent = t(el.dataset.i18n); });
   document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML = t(el.dataset.i18nHtml); });
   document.querySelectorAll('[data-i18n-ph]').forEach(el=>{ el.placeholder = t(el.dataset.i18nPh); });
-  const lb = document.getElementById('btnLang'); if(lb) lb.textContent = t('langSwitch');
+  document.querySelectorAll('#langSeg button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.langBtn === lang);
+  });
 }
-
 
 /* ---------------- 语言切换 ---------------- */
-$('#btnLang').addEventListener('click', ()=> setLang(lang==='zh' ? 'en' : 'zh', true));
-
-
-/* ---------------- 外观主题（浅色 / 深色 / 跟随系统） ---------------- */
-const THEME_KEY = 'vc2_theme';
-const THEME_CYCLE = ['auto','light','dark'];
-const THEME_LABEL = { auto:'跟随系统', light:'浅色', dark:'深色' };
-const THEME_LABEL_EN = { auto:'Automatic', light:'Light', dark:'Dark' };
-
-function systemPrefersDark(){
-  return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-}
-function resolvedTheme(pref){
-  return pref === 'auto' ? (systemPrefersDark() ? 'dark' : 'light') : pref;
-}
-/* 把 CSS 变量真正落到 :root 上。
-   非 auto 时写 data-theme，auto 时移除该属性（交回给 prefers-color-scheme 媒体查询）。
-   data-theme-resolved 只用于切换那颗按钮的图标。 */
-function applyTheme(pref, save){
-  const p = THEME_CYCLE.indexOf(pref) >= 0 ? pref : 'auto';
-  theme = p;
-  const root = document.documentElement;
-  if(p === 'auto') root.removeAttribute('data-theme');
-  else root.setAttribute('data-theme', p);
-  root.setAttribute('data-theme-resolved', resolvedTheme(p));
-  root.style.colorScheme = resolvedTheme(p);
-  if(save){ try{ localStorage.setItem(THEME_KEY, p); }catch(_){} }
-  const btn = $('#btnTheme');
-  if(btn){
-    const zh = (typeof lang !== 'undefined' && lang === 'zh');
-    const label = (zh ? THEME_LABEL : THEME_LABEL_EN)[p];
-    btn.title = label;
-    btn.setAttribute('aria-label', label);
-  }
-}
-function cycleTheme(){
-  const i = THEME_CYCLE.indexOf(theme);
-  applyTheme(THEME_CYCLE[(i + 1) % THEME_CYCLE.length], true);
-}
-let theme = (()=>{
-  try{
-    const saved = localStorage.getItem(THEME_KEY);
-    if(THEME_CYCLE.indexOf(saved) >= 0) return saved;
-  }catch(_){}
-  return 'auto';
-})();
-
-applyTheme(theme, false);
-$('#btnTheme').addEventListener('click', cycleTheme);
-/* 跟随系统时，系统切换要实时反映（图标与配色一起） */
-if(window.matchMedia){
-  const mq = window.matchMedia('(prefers-color-scheme: dark)');
-  const onSys = ()=>{ if(theme === 'auto') applyTheme('auto', false); };
-  if(mq.addEventListener) mq.addEventListener('change', onSys);
-  else if(mq.addListener) mq.addListener(onSys);
-}
-/* 切界面语言时，主题按钮的提示文字要跟着变 */
-const _applyI18nForTheme = applyI18n;
-applyI18n = function(){ _applyI18nForTheme.apply(this, arguments); applyTheme(theme, false); };
+document.querySelectorAll('#langSeg button').forEach(b=>{
+  b.addEventListener('click', ()=> setLang(b.dataset.langBtn, true));
+});
 
 applyI18n();
 </script>
