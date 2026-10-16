@@ -28,13 +28,41 @@
    「隐藏」按钮走 postMessage 写的也是同一个 key。
    跨域限制：我们改不了 iframe 里的内容，但能写自己站的 localStorage，
    所以在这里同步写好标记，让徽章来不及渲染。
-   用 try/catch 包住：隐私模式下 localStorage 不可写，不能因此弄坏页面。 */
+   用 try/catch 包住：隐私模式下 localStorage 不可写，不能因此弄坏页面。
+
+   ⚠️ 2026-10 起这条**已经失效**：Netlify 改了规则，免费套餐下徽章是套餐的
+   一部分。HUD 脚本里 HIDEABLE = variant!=="public" || accountTier!=="free"，
+   我们站点是 free，所以 HIDEABLE 恒为 false，于是：
+     - 不再提供「隐藏」按钮；
+     - 而且第 89 行 `if (HIDEABLE && hiddenIsLive(...))` 永不成立，
+       读到我们写的 "hidden" 会直接 writeState("") 把它抹掉再渲染。
+   也就是说下面这两行现在只是历史遗留，留着无害（套餐升级后自动又生效），
+   真正压制徽章的是下面的 CSS。 */
 try{
   localStorage.setItem('nl-hud:public:v1', 'hidden');        // 公开访客看到的徽章
   localStorage.setItem('nl-hud:owner-private:v1', 'hidden'); // 站点所有者自己访问时的工具条
 }catch(_){}
 </script>
 <style>
+  /* 盖住 Netlify 徽章（免费套餐强制显示，localStorage 那招已失效，见上方注释）。
+     它是跨域 iframe，内部改不了，但**外层容器是我们能碰的**：
+     HUD 挂在 <html> 上，脚本用 frame.id = "nl-badge-frame"（public 变体），
+     所以直接按 id 隐藏即可。用 !important 压过它行内的 z-index/position。
+
+     为什么不用 display:none：HUD 内部有布局测量，display:none 的 iframe
+     在部分浏览器里拿不到尺寸，可能触发布局抖动；visibility+clip 更干净，
+     同时还留着那段 "clip-path: path('M0 0Z')" 的语义（可见但零面积）。
+     也不删节点：删了 Netlify 可能反复重插，反而更闪。 */
+  #nl-badge-frame,
+  #nl-hud-frame{
+    visibility:hidden !important;
+    opacity:0 !important;
+    pointer-events:none !important;
+    width:0 !important;
+    height:0 !important;
+    clip-path:inset(100%) !important;
+  }
+
   /* 主题令牌。深色是默认外观（保持这个工具原本的样子），
      [data-theme="light"] 覆盖同名令牌。两套 key 必须完全一致。 */
   :root{

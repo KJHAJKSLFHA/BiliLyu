@@ -15,7 +15,8 @@ DIST="$ROOT/dist"
 APP_NAME="BiliLyu 视频转换器"
 EXEC_NAME="BiliLyu"
 BUNDLE_ID="com.bililyu.converter"
-VERSION="1.0.0"
+# 版本号跟打包日期走，省得每次手改还忘记。BUILD_VERSION 可覆盖。
+VERSION="${BUILD_VERSION:-1.0.$(date +%y%m%d)}"
 MIN_MACOS="13.0"
 
 APP="$DIST/$APP_NAME.app"
@@ -75,11 +76,21 @@ fi
 cp "$PRESET_ICON" "$CONTENTS/Resources/AppIcon.icns"
 
 echo "==> 打包网页资源"
+# 入口必须是**转换器** app/index.html，不是仓库根的 index.html。
+#
+# 仓库重构成三页结构后：根 index.html 变成了网站宣传页（hero/feat/download 那些
+# 落地页文案），转换器搬进了 app/。宿主 main.swift:643 固定导航到
+# bililive://local/index.html，所以这里把 app/ 那份放成 index.html 当入口，
+# 宣传页另存为 about.html（不丢，但不挡路）。
 WEB="$CONTENTS/Resources/web"
 mkdir -p "$WEB/vendor"
-cp "$ROOT/index.html" "$WEB/index.html"
-cp "$ROOT/vendor/ffmpeg.min.js" "$ROOT/vendor/ffmpeg-core.js" \
-   "$ROOT/vendor/ffmpeg-core.wasm" "$ROOT/vendor/ffmpeg-core.worker.js" "$WEB/vendor/"
+cp "$ROOT/app/index.html" "$WEB/index.html"
+# 引擎：corePath 是相对 location.href 的 vendor/ffmpeg-core.js（app/index.html:717），
+# 所以 wasm 必须跟 core.js 同目录，一起放到 web/vendor/ 下。
+cp "$ROOT/app/vendor/ffmpeg.min.js" "$ROOT/app/vendor/ffmpeg-core.js" \
+   "$ROOT/app/vendor/ffmpeg-core.wasm" "$ROOT/app/vendor/ffmpeg-core.worker.js" "$WEB/vendor/"
+# 宣传页留个副本，方便 app 内自查"官网长什么样"
+cp "$ROOT/index.html" "$WEB/about.html"
 
 echo "==> 内置 ffmpeg"
 mkdir -p "$CONTENTS/Resources/bin"
