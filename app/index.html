@@ -477,6 +477,7 @@ try{
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M3 12h18"/></svg>
       <span data-i18n="tasks">转换任务</span>
       <div class="spacer" style="flex:1"></div>
+      <button class="btn ghost" id="btnClearJobs" style="padding:4px 10px" data-i18n="clearJobs">清除记录</button>
       <button class="btn ghost" id="btnCloseDrawer" style="padding:4px 10px" data-i18n="collapse">收起</button>
     </div>
   </header>
@@ -514,7 +515,7 @@ const I18N = {
     searchPh:'搜索标题 / UP主 / BV号…',
     tabAll:'全部', tabPending:'待转换', tabDone:'已转换',
     sortTitle:'按标题', sortSize:'按大小', sortDuration:'按时长',
-    clearList:'清空列表',
+    clearList:'清空列表', clearJobs:'清除记录',
     outLabel:'输出文件夹',
     outUnset:'未选择（将下载到浏览器默认下载位置）',
     outSet:'『{name}』文件夹',
@@ -543,18 +544,23 @@ const I18N = {
     toastCancelRunningFirst:'请先取消正在进行的转换',
     toastListEmpty:'列表已是空的',
     confirmClearList:'确定清空整个列表吗？（不会删除你的原文件）',
+    toastJobsEmpty:'暂无转换记录',
+    confirmClearJobs:'确定清除全部转换记录吗？（只是清掉这里的显示，不影响已转换的文件）',
     toastCannotRemoveRunning:'正在转换中的任务无法移除',
     toastNoPicker:'当前浏览器不支持选择文件夹，转换后将自动下载到「下载」文件夹',
     toastNoPerm:'未获得写入权限',
     toastOutSet:'输出文件夹已设为：{name}',
     toastOutFail:'选择文件夹失败：{msg}',
     toastDelUnsupported:'当前导入方式不支持删除原文件（需用「选择视频文件夹」导入）',
+    toastWriteOk:'已获得 {n} 个文件夹的写入权限，转换后会自动删除原文件',
     warnDel:'⚠️ 已开启「转换后删除原文件」：转换成功后会永久删除对应的原始文件，请确认你不再需要它们。转换失败的视频不会删除原文件。',
     toastBusy:'已有转换任务正在进行',
     toastNoPending:'没有待转换的视频',
     toastEngineFail:'转换引擎加载失败：{msg}（请检查网络后重试）',
     msgCanceled:'已取消',
+    msgDelFailed:'原文件删除失败（{n} 项，可能没有写入权限）',
     toastDone:'转换完成：成功 {n} 个',
+    toastDelFailed:'「{title}」的原文件没能删掉，可能缺少写入权限',
     toastAllCanceled:'已取消全部转换任务',
     toastNothingCancel:'没有正在进行的或排队中的任务',
     confirmCancelAll:'确定取消全部转换吗？正在转换的视频会被中断，已完成的会保留。',
@@ -574,7 +580,7 @@ const I18N = {
     searchPh:'Search title / uploader / BV id…',
     tabAll:'All', tabPending:'Pending', tabDone:'Converted',
     sortTitle:'By title', sortSize:'By size', sortDuration:'By duration',
-    clearList:'Clear list',
+    clearList:'Clear list', clearJobs:'Clear records',
     outLabel:'Output folder',
     outUnset:'Not set (files will go to your browser’s default download folder)',
     outSet:'Folder “{name}”',
@@ -603,18 +609,23 @@ const I18N = {
     toastCancelRunningFirst:'Cancel the running conversion first',
     toastListEmpty:'The list is already empty',
     confirmClearList:'Clear the whole list? (Your source files will not be deleted.)',
+    toastJobsEmpty:'No conversion records',
+    confirmClearJobs:'Clear all conversion records? (This only clears the list here; converted files are not affected.)',
     toastCannotRemoveRunning:'Running tasks cannot be removed',
     toastNoPicker:'This browser cannot pick a folder; converted files will be downloaded to your Downloads folder',
     toastNoPerm:'Write permission was not granted',
     toastOutSet:'Output folder set to: {name}',
     toastOutFail:'Failed to choose a folder: {msg}',
     toastDelUnsupported:'Deleting source files requires importing via “Choose Folder”',
+    toastWriteOk:'Write access granted for {n} folder(s); source files will be deleted after conversion',
     warnDel:'⚠️ “Delete source files after conversion” is on: after a successful conversion the original files are permanently deleted. Make sure you no longer need them. Files from failed conversions are kept.',
     toastBusy:'A conversion task is already running',
     toastNoPending:'No pending videos',
     toastEngineFail:'Failed to load the conversion engine: {msg} (check your network and try again)',
     msgCanceled:'Canceled',
+    msgDelFailed:'Could not delete source files ({n} item(s); write permission may be missing)',
     toastDone:'Conversion finished: {n} succeeded',
+    toastDelFailed:'Could not delete source files for "{title}" (write permission may be missing)',
     toastAllCanceled:'All conversion tasks canceled',
     toastNothingCancel:'No running or queued tasks',
     confirmCancelAll:'Cancel all conversions? The video being converted will be interrupted; finished ones are kept.',
@@ -854,15 +865,35 @@ async function updateSizes(){
 }
 
 /* ---------------- 采集器 ---------------- */
+// 记录文件所属的**目录句柄**，删除时才能整目录摘掉。
+// 以前 del 只存 {handle:dirHandle, name}，删的时候是逐个 removeEntry(name)，
+// 结果 B 站下载目录里的 videoInfo.json、封面图、以及空目录本身全都留下
+// ——「转换后删除原文件」看起来像没生效。现在把 dir 也带上，整目录删。
 async function walkHandle(dirHandle, prefix, out){
   for await (const [name, handle] of dirHandle.entries()){
     if(name==='.DS_Store' || name.startsWith('.')) continue;
     if(handle.kind==='file'){
-      out.push({ path: prefix+name, name, getFile: ()=>handle.getFile(), del:{ handle:dirHandle, name } });
+      // parent 是这层目录的句柄，parentName 是它相对整个导入根的名字。
+      // 有了这两个，删除时才能「把视频所在的那个文件夹整个删掉」。
+      out.push({
+        path: prefix+name, name,
+        getFile: ()=>handle.getFile(),
+        del:{ handle:dirHandle, name, parent:dirHandle, parentName:parentOf(prefix) },
+      });
     } else if(handle.kind==='directory'){
+      // 子目录也要写权限才删得动；这里只登记，真正的 requestPermission
+      // 放在 ensureWriteAccess 里，由「删除原文件」开关控制是否要权限。
+      out.push({ path: prefix+name+'/', name, getFile: null, del:null, subdir:{ handle, name, prefix } });
       await walkHandle(handle, prefix+name+'/', out);
     }
   }
+}
+// 'a/b/' → 'b'；顶层文件 prefix 为 '' → null（顶层不给整目录删，怕连累别的）
+function parentOf(prefix){
+  const p = String(prefix || '').replace(/\/+$/, '');
+  if(!p) return null;
+  const i = p.lastIndexOf('/');
+  return i < 0 ? p : p.slice(i + 1);
 }
 async function walkEntry(entry, prefix, out){
   if(entry.isFile){
@@ -882,11 +913,45 @@ async function walkEntry(entry, prefix, out){
 }
 
 /* ---------------- 导入入口 ---------------- */
+// 递归把要删的父目录写权限要到手。
+//
+// 为什么必须单独请求：选文件夹时浏览器只给**顶层**句柄写权限，removeEntry
+// 在没写权限的句柄上会抛 NotAllowedError。以前删除失败被 catch(_){} 吞掉，
+// 用户看到的就是"删了但文件夹还在"。
+//
+// 这里请求的是**每个视频文件夹自己**的读写权（不是它的父目录），因为要删的
+// 是文件夹本身。由「转换后删除原文件」开关决定要不要请求 —— 不开开关的人
+// 不该白吃一串权限框。
+async function ensureWriteAccess(recs){
+  const seen = new Set(); const targets = [];
+  for(const r of recs){
+    if(!r) continue;
+    // 目录本身
+    if(r.subdir && r.subdir.handle){ targets.push(r.subdir.handle); continue; }
+    // 顶层文件没有 parentName，不参与整目录删，跳过
+    if(r.del && r.del.parentName && r.del.parent && !seen.has(r.del.parentName)){
+      seen.add(r.del.parentName); targets.push(r.del.parent);
+    }
+  }
+  if(!targets.length) return 0;
+  let ok = 0;
+  for(const h of targets){
+    try{
+      let p = await h.queryPermission({ mode:'readwrite' });
+      if(p !== 'granted') p = await h.requestPermission({ mode:'readwrite' });
+      if(p === 'granted') ok++;
+    }catch(_){ /* 拿不到就跳过，删除时会再兜一次并报错 */ }
+  }
+  return ok;
+}
+
 async function pickDir(){
   if(window.showDirectoryPicker){
     try{
       const dir = await window.showDirectoryPicker({ mode:'readwrite' });
       const recs = []; await walkHandle(dir, '', recs);
+      // 只有开了「转换后删除原文件」才争子目录写权限，避免不开的人白吃弹框
+      if(state.deleteOriginals) await ensureWriteAccess(recs);
       await ingestRecords(recs); return;
     }catch(e){ if(e && e.name==='AbortError') return; }
   }
@@ -1054,6 +1119,17 @@ $('#btnClearAll').addEventListener('click', ()=>{
     state.items=[]; state.sel.clear(); state.queue=[]; render(); paintDrawer();
   }
 });
+// 转换记录（右边抽屉）单独清除。
+// 以前「清空列表」只清 state.items，抽屉读的是 state.jobs，两者互不相干 ——
+// 主列表清空了抽屉还挂着全部记录、右下角悬浮按钮角标也不归零，
+// 用户看到的就是"清空列表没效果"。这里给抽屉自己一个清除键。
+$('#btnClearJobs').addEventListener('click', ()=>{
+  if(state.running){ toast(t('toastCancelRunningFirst'), 'err'); return; }
+  if(!state.jobs.length){ toast(t('toastJobsEmpty')); return; }
+  if(confirm(t('confirmClearJobs'))){
+    state.jobs = []; paintDrawer();
+  }
+});
 function revokeCover(it){ if(it.coverUrl && it.coverUrl.slice(0,5)==='blob:'){ try{ URL.revokeObjectURL(it.coverUrl); }catch(_){} } }
 function removeItems(ids){
   const set = new Set(ids);
@@ -1101,14 +1177,27 @@ $('#btnOutClear').addEventListener('click', ()=>{
 });
 
 /* ---------------- 删除原文件 ---------------- */
-$('#swDel').addEventListener('click', ()=>{
+$('#swDel').addEventListener('click', async ()=>{
   if($('#swDel').classList.contains('dis')){ toast(t('toastDelUnsupported'), 'err'); return; }
   const on = !$('#swDel').classList.contains('on');
   $('#swDel').classList.toggle('on', on);
   state.deleteOriginals = on;
   const wb = $('#warnBar');
   wb.style.display = on ? 'block' : 'none';
-  if(on) wb.textContent = t('warnDel');
+  if(on){
+    wb.textContent = t('warnDel');
+    // 导入时开关若为关，就没争过子目录写权限。这里补一次，
+    // 否则「先导入、后开开关」的人转换完会发现文件夹还在，且毫无提示。
+    const recs = [];
+    state.items.forEach(it=>{
+      if(it.vrec && it.vrec.del) recs.push(it.vrec);
+      if(it.arec && it.arec.del) recs.push(it.arec);
+    });
+    try{
+      const n = await ensureWriteAccess(recs);
+      if(n) toast(t('toastWriteOk', { n }), 'ok');
+    }catch(_){ /* 拿不到就让删除阶段自己报错 */ }
+  }
 });
 function updateDelUI(){
   const anyDeletable = state.items.some(i=>i.deletable);
@@ -1164,15 +1253,28 @@ async function pump(){
   try{
     await convertOne(it);
     it.status='done'; it.progress=1; it.message='';
-    if(state.deleteOriginals && it.deletable){ await deleteOriginals(it); }
+    if(state.deleteOriginals && it.deletable){
+      const r = await deleteOriginals(it);
+      // 删不掉要说出来。以前 catch(_){} 把失败整个吞了，用户只看到
+      // "转换完成了但文件夹还在"，根本不知道是权限问题。
+      if(r && r.failed && r.failed.length){
+        it.message = t('msgDelFailed', { n: r.failed.length });
+        toast(t('toastDelFailed', { title: it.title }), 'err');
+      }
+    }
   }catch(e){
     if(state.cancelFlag){ it.status='canceled'; it.message=t('msgCanceled'); }
     else { it.status='error'; it.message = (e && e.message) ? e.message : String(e); }
   }
+  // running 必须在任何情况下都复位：下面 recycleEngine 一旦抛错（内核崩了），
+  // 不 try 住就会跳出 pump 而 setTimeout(pump) 永不执行 —— 队列卡死、
+  // 而且 running 留在非 null 上，之后「清空列表」「取消」全部被第一道门挡掉。
+  try{
+    // 内核每次命令后会终止，回收后由下一轮 ensureEngine() 重新装载
+    await recycleEngine();
+  }catch(_){ /* 回收失败不影响收尾，下一轮 ensureEngine 会重建 */ }
   state.running = null;
   upsertJob(it); render(); paintDrawer();
-  // 内核每次命令后会终止，回收后由下一轮 ensureEngine() 重新装载
-  await recycleEngine();
   setTimeout(pump, 30);
 }
 
@@ -1243,11 +1345,50 @@ async function writeOut(name, data){
     setTimeout(()=>URL.revokeObjectURL(url), 20000);
   }
 }
+// 删除原文件：优先**整目录摘掉**，这样 B 站下载目录里的 videoInfo.json、
+// 封面图、以及那个空文件夹都一起没了。
+//
+// 为什么不能只删 m4s：B 站长这样
+//   【标题】/ videoInfo.json + 视频.m4s + 音频.m4s + image.jpg + group.jpg
+// 只删两个 m4s 会留一地残渣，用户看到的"原文件夹还在"就是这么来的。
+//
+// 目录删不掉时（没写权限、只读挂载等）退回逐个删文件，至少把 m4s 清掉，
+// 并把失败原因报回给调用方 —— 以前 catch(_){} 全吞了，删失败用户毫不知情。
 async function deleteOriginals(it){
+  const result = { dirs:0, files:0, failed:[] };
+  // 先按目录归组：同一个视频文件夹里的文件只能删一次目录，多删会报 NotFound
+  const byDir = new Map();     // parentName → { handle, files:[] }
+  const loose = [];            // 没有 parentName 的（导入根目录下的文件）
   for(const d of it.originals){
-    try{ if(d && d.handle && d.handle.removeEntry) await d.handle.removeEntry(d.name); }
-    catch(_){}
+    if(!d || !d.handle) continue;
+    if(d.parentName && d.parent && d.parent.removeEntry){
+      if(!byDir.has(d.parentName)) byDir.set(d.parentName, { handle:d.parent, files:[] });
+      byDir.get(d.parentName).files.push(d);
+    } else {
+      loose.push(d);
+    }
   }
+  // 1) 整目录删
+  for(const [name, g] of byDir){
+    try{
+      await g.handle.removeEntry(name, { recursive:true });
+      result.dirs++;
+    }catch(e){
+      if(e && e.name === 'NotFoundError'){ result.dirs++; continue; }  // 已经没了也算成功
+      // 权限不足 / 被占用 → 退回逐个删里面的文件
+      result.failed.push(name + '：' + (e.name || e.message));
+      for(const d of g.files){
+        try{ await d.handle.removeEntry(d.name); result.files++; }
+        catch(e2){ if(e2 && e2.name !== 'NotFoundError') result.failed.push(d.name + '：' + (e2.name || e2.message)); }
+      }
+    }
+  }
+  // 2) 兜底：没有可删目录的，逐个删文件
+  for(const d of loose){
+    try{ await d.handle.removeEntry(d.name); result.files++; }
+    catch(e){ if(e && e.name !== 'NotFoundError') result.failed.push(d.name + '：' + (e.name || e.message)); }
+  }
+  return result;
 }
 
 /* ---------------- 取消 ---------------- */
@@ -1256,6 +1397,11 @@ async function cancelAll(){
   state.queue = [];
   if(state.running && state.ff){ try{ state.ff.exit(); }catch(_){} resetEngine(); }
   state.items.forEach(i=>{ if(i.status==='pending') i.status='canceled'; });
+  // 立刻把 running 复位。pump 的下一轮本来也会复位，但那是**异步**的：
+  // 如果 convertOne 的 Promise 因为内核崩溃永远不 resolve，running 就永久
+  // 挂着非 null，于是「清空列表」和「取消」全被第一道门挡掉，表现为
+  // "点了完全没反应"。这里同步清掉，pump 醒过来时再清一次也无害。
+  state.running = null;
   render(); paintDrawer();
 }
 $('#btnCancelAll').addEventListener('click', ()=>{
